@@ -1,0 +1,40 @@
+#! /usr/bin/env ruby
+#  encoding: UTF-8
+
+### config
+API_HOST = '{{_api_ip}}'
+API_PORT = 80
+
+
+### input
+# $PAM_USER $password $(hostname)
+username = ARGV[0]
+token = ARGV[1]
+hostname = ARGV[2]
+
+
+#
+require 'net/http'
+
+begin
+  response = Net::HTTP.get_response(
+      API_HOST,
+      "/auth_access_cluster/?format=string&username=#{username}&token=#{token}&hostname=#{hostname}",
+      API_PORT
+  )
+  s_res = response.body
+  s_res.strip!
+
+  if s_res==""
+    exit(1)
+  else
+    print s_res
+    exit(0)
+  end
+
+
+
+rescue
+  exit(1)
+end
+

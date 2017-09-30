@@ -1,0 +1,15 @@
+  <%# vagrant:vagrant:0775 %>{
+  "checks": {
+    "check_gex_api_events": {
+      "handlers": ["mail_admin"],
+      "type": "standard",
+      "command": "/etc/sensu/plugins/check_gex_api_events.rb",
+      "subscribers": [
+        "api_events"
+      ],
+      "publish": true,
+      "interval": 10,
+      "refresh": 1
+    }
+  }
+}

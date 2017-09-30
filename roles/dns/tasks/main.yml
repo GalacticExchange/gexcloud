@@ -1,0 +1,50 @@
+---
+### set DNS servers
+## taken from https://github.com/jdauphant/ansible-role-dns
+
+#- debug: msg="servers={{dns_nameservers}}"
+
+## my add-on
+#- name: install dnsmasq
+#  apt: pkg=dnsmasq state=latest
+
+#
+- name: Remove resolvconf on Debian system
+  apt: pkg=resolvconf state=absent
+  when: dns_remove_resolvconf
+  tags: [packages,dns]
+
+- name: remove immutable attribute from resolv.conf
+  shell: chattr -i /etc/resolv.conf |true
+
+- name: Ensure dns servers are configured in /etc/resolv.conf
+  template: src=resolv.conf.j2 dest=/etc/resolv.conf
+  tags: [configuration,dns]
+
+- name: Ensure dns servers are configured in dhclient.conf
+  lineinfile: >
+     regexp="#?(supersede|prepend) {{item.name}} "
+     line="{{dns_dhclient_rule}} {{item.name}} {{item.value}};"
+     dest="{{dns_dhclient_file}}"
+     state=present
+  with_items:
+    - { name: 'domain-name-servers', value: '{% for nameserver in dns_nameservers %}{{nameserver}}{% if not loop.last %},{% endif %}{% endfor %}' }
+    - { name: 'domain-name', value: '\"{{dns_domain}}\"' }
+    - { name: 'domain-search', value: '{% for domainsearch in dns_searchs %}\"{{domainsearch}}\"{% if not loop.last %}, {% endif %}{% endfor %}' }
+  when:  dns_forced_in_dhclientconf and item.value != ""
+  tags: [configuration,dns]
+
+
+### restart
+#- name: restart dnsmasq
+#  shell: sudo service dnsmasq restart
+#  ignore_errors: true
+
+#- name: restart network-manager
+#  shell: sudo service network-manager restart
+
+#- name: restart again
+#  shell: >
+#    sudo service dnsmasq restart;
+#    sudo service network-manager restart
+#  ignore_errors: true

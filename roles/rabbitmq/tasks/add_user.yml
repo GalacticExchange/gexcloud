@@ -1,0 +1,9 @@
+---
+  - name: add user
+    shell: sudo rabbitmqctl add_user {{username}} {{password}}
+
+  - name: make user admin
+    shell: sudo rabbitmqctl set_user_tags {{username}} administrator
+
+  - name: user permissions
+    shell: sudo rabbitmqctl set_permissions -p {{vhost}} {{username}} ".*" ".*" ".*"

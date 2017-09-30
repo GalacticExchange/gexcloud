@@ -1,0 +1,7 @@
+---
+# include vars for the app
+- set_fact:
+    server_dir: "../{{server}}"
+
+- include_vars: "{{server_dir}}/vars/apps/{{app_name}}.yml"
+

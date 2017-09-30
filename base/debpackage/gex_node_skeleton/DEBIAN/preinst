@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+mkdir -p /var/preinst
+
+if id "vagrant" >/dev/null 2>&1; then
+ echo "user exists"
+else
+ echo "user does not exist"
+ useradd -p $(openssl passwd -1 vagrant) -m -s /bin/bash vagrant
+ adduser vagrant sudo
+fi
+

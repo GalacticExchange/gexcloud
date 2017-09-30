@@ -1,0 +1,59 @@
+GATEWAY = "51.1.1.100"
+PRIVATE_IP = "51.0.1.7"
+PRIVATE_MASK = "255.0.0.0"
+
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "ubuntu/wily64"
+
+  config.vm.box_check_update = false
+
+  config.ssh.password="vagrant"
+
+  config.vm.define "main", primary: true do |m|
+    m.vm.network "public_network", auto_config: false, :bridge => "eth0"
+    m.vm.provision "shell", run: "always", inline: "ifconfig eth1 " + PRIVATE_IP + " netmask " + PRIVATE_MASK + " up"
+
+
+    m.vm.provider "virtualbox" do |vb|
+      vb.memory = "512"
+    end
+
+
+    # gateway
+    m.vm.provision "shell", run: "always", inline: "route add default gw "+ GATEWAY
+    # delete default gw on eth0
+    m.vm.provision "shell", run: "always",
+                      inline: "eval `route -n | awk '{ if ($8 ==\"eth0\" && $2 != \"0.0.0.0\") print \"route del default gw \" $2; }'`"
+
+
+
+
+    m.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbook.yml"
+      ansible.extra_vars =
+          {
+              machine: "main",
+              _private_ip: PRIVATE_IP,
+              #_public_ip: PUBLIC_IP
+          }
+    end
+
+    file_to_disk = './tmp/large_disk.vdi'
+
+    Vagrant::Config.run do |config1|
+    config1.vm.box = 'base'
+
+    config1.vm.customize ['createhd', '--filename', file_to_disk, '--size', 500 * 1024]
+    config1.vm.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
+end
+
+
+
+
+  end
+
+
+
+
+end

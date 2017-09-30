@@ -1,0 +1,15 @@
+---
+- name: update
+  apt: update_cache=yes
+
+- name: software-properties-common
+  apt: pkg=software-properties-common state=latest
+
+- name: apt-add-repository ppa:ansible/ansible
+  shell: sudo apt-add-repository ppa:ansible/ansible -y
+
+- name: update
+  apt: update_cache=yes
+
+- name: install ansible
+  apt: pkg=ansible state=latest

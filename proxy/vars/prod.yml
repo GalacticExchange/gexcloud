@@ -1,0 +1,4 @@
+hostname: proxy
+domainname: proxy.gex
+
+dns_server: 51.0.1.8

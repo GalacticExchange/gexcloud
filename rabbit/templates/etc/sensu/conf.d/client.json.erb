@@ -1,0 +1,19 @@
+<%# vagrant:vagrant:755 %>{
+  "client": {
+    "name": "server_rabbit",
+    "address": "<%= @private_ip %>",
+    "subscriptions": [
+        "client_node"
+    ],
+    "props": {
+        "node_id": "server_rabbit",
+
+        "rabbitmq": {
+            "host": "<%=@rabbitmq_host%>",
+            "vhost": "/sensu",
+            "user": "sensu",
+            "password": "PH_GEX_PASSWD1"
+        }
+    }
+  }
+}

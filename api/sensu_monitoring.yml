@@ -1,0 +1,15 @@
+---
+### add plugins for monitoring with sensu
+
+- include: sensu_check_dns.yml
+
+
+### SENSU-client fix, start
+
+- name: fix permissions
+  shell: chmod +x -R /etc/sensu/plugins;
+    chown -R vagrant:vagrant /etc/sensu;
+
+- name: restart sensu
+  include: ../roles/sensu-client/handlers/sensu_restart.yml
+

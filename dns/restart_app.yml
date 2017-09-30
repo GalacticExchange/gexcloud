@@ -1,0 +1,20 @@
+---
+- name: fix permissions
+  shell: >
+      sudo chown vagrant:vagrant -R /var/www/apps/dns;
+  changed_when: False
+
+- name: fix permissions restart.txt
+  shell:
+      sudo chown vagrant:vagrant /var/www/apps/dns/tmp/restart.txt;
+  changed_when: False
+  ignore_errors: yes
+
+
+- name: restart app
+  shell: >
+    sudo service god restart;
+    touch /var/www/apps/dns/tmp/restart.txt;
+    sudo ruby /var/www/apps/dns/run_daemon.rb restart -e {{app_env}};
+    sudo god restart dns-{{app_env}};
+  changed_when: False

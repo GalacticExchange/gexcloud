@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+
+rm /tmp/*.pid
+
+ip route replace default via <%= assert_nnil(@GATEWAY) %>
+
+service dnsmasq start
+
+

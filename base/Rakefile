@@ -1,0 +1,159 @@
+require 'net/http'
+require 'uri'
+require_relative 'ruby/deploy'
+
+
+desc "Check bash files"
+task :check do
+  sh 'ruby -c ruby_scripts/playbook.rb'
+  sh 'ruby -c ruby_scripts/slaveplaybook.rb'
+end
+
+
+task :clean do
+  sh 'vagrant destroy -f image'
+end
+
+task :default => :plain
+
+
+def build_box(box_type)
+  arg = 'export HDP_TYPE=' + "#{box_type}" + ' ; vagrant up image'
+  sh "#{arg}"
+  sh 'vagrant halt image | true'
+  sh "rm -rf /tmp/boxes/#{box_type}.box | true"
+  sh "mkdir -p /tmp/boxes"
+  sh "vagrant package image --output /tmp/boxes/#{box_type}.box"
+end
+
+def package_box(box_type)
+  sh "vagrant package image --output /tmp/boxes/#{box_type}.box"
+end
+
+
+desc "Build  box cdh or  plain"
+# noinspection RubyUnusedLocalVariable
+task :box, [:type] => [:check, :clean] do |task, args|
+  args.with_defaults(type: "cdh")
+  build_box args[:type]
+end
+
+
+# /opt/vagrant/embedded/gems/gems/vagrant-1.7.4/lib/vagrant/action/general/package.rb
+
+desc "Package  box cdh or plain"
+# noinspection RubyUnusedLocalVariable
+task :package_box, [:type] do |task, args|
+  args.with_defaults(type: "cdh")
+  package_box args[:type]
+end
+
+
+desc "Deploy box to local machine"
+# noinspection RubyUnusedLocalVariable
+task :deploy_local, [:type] do |task, args|
+  args.with_defaults(type: "cdh")
+  sh "vagrant box add --force gex/client /tmp/boxes/#{args[:type]}.box"
+end
+
+
+now=`date +%m_%d_%Y_%s`.strip
+VERSION="0.9.1.#{now}"
+
+def deploy_all_to_server(where, password)
+
+  ssh_cmd_server(where, 'sudo rm -rf /var/www/html/boxes; sudo mkdir /var/www/html/boxes; sudo chmod a+rwx /var/www/html/boxes', "gex-files") if where != "aws"
+
+  boxes=`cd /tmp/boxes && ls *.box`
+  boxes.each_line do |line|
+    box_file_name = line.strip
+    deploy_single_box_to_server where, box_file_name
+  end
+end
+
+desc "Clear all aws boxes"
+task :clear_aws_boxes do
+  clear_bucket_aws ('gex-boxes')
+end
+
+desc "Deploy box [cdh] or [plain ] to files main "
+# noinspection RubyUnusedLocalVariable
+task :deploy_box_local, [:type] do |task, args|
+  args.with_defaults(type: "cdh")
+  deploy_single_box_to_server "main", args[:type] + ".box"
+end
+
+
+desc "Deploy box to aws production"
+# noinspection RubyUnusedLocalVariable
+task :deploy_box_aws, :type do |task, args|
+  args.with_defaults(type: "cdh")
+  deploy_single_box_to_server "aws", args[:type] + ".box"
+end
+
+
+desc "Deploy deb to [main] or [aws] "
+# noinspection RubyUnusedLocalVariable
+task :deploy_deb, [:where] => :create_deb do |task, args|
+  fail "Missing command line argument" if args[:where].nil?
+  fail "Incorrect argument #{args[:where]}" unless (%w(main aws).include? args[:where])
+
+  sh "echo Deploying to server"
+  deb_file = File.basename(Dir.glob("debpackage/build/*.deb").max_by { |f| File.mtime(f) })
+  deploy_deb_to_server args[:where], deb_file
+end
+
+desc "Clean old local boxes"
+# noinspection RubyUnusedLocalVariable
+task :clean_old_local, :type do |task, args|
+  sh 'rm -rf docker/*'
+  args.with_defaults(type: "cdh")
+  clean_old_local_boxes args[:type]
+end
+
+
+#desc "Create base Ubuntu15 image"
+#task :ubuntu do
+#  sh "mkdir -p  /disk2/tmp/ubuntu15docker"
+#  sh "vagrant destroy  ubuntu15docker -f"
+#  sh " vagrant box remove ubuntu15docker | true "
+#  sh " vagrant up ubuntu15docker "
+#  sh " vagrant halt ubuntu15docker |true "
+#  sh "rm -rf /disk2/tmp/ubuntu15docker/*"
+#  sh "vagrant package ubuntu15docker --output /disk2/tmp/ubuntu15docker/ubuntu15docker.box"
+#  sh "vagrant box add --force gex/ubuntu15docker /disk2/tmp/ubuntu15docker/ubuntu15docker.box"
+#end
+
+desc "Sync box to aws production"
+# noinspection RubyUnusedLocalVariable
+task :sync_box_aws, :type do |task, args|
+  args.with_defaults(type: "cdh")
+  sync_single_box_to_server(args[:type] + ".box")
+end
+
+
+desc 'Create ubuntu16basic box'
+task :ubuntu16 do
+  sh 'mkdir -p /work/builds/boxes'
+  sh 'rm -rf /work/builds/boxes/*'
+  sh 'vagrant destroy -f ubuntu16basic |true'
+  sh 'vagrant box remove ubuntu16basic |true'
+  sh 'vagrant up ubuntu16basic'
+  sh 'vagrant package ubuntu16basic --output /work/builds/boxes/ubuntu16basic.box'
+  sh 'vagrant box add --force ubuntu16basic /work/builds/boxes/ubuntu16basic.box'
+end
+
+desc 'Create Ubuntu16 image'
+#task :ubuntu => [:ubuntu16] do
+task :ubuntu  do
+  sh 'mkdir -p  /disk2/tmp/ubuntu16docker'
+  sh 'vagrant destroy  ubuntu16docker -f'
+  sh 'vagrant box remove ubuntu16docker | true '
+  sh 'vagrant up ubuntu16docker '
+  sh 'rm -rf /disk2/tmp/ubuntu16docker/*'
+  sh 'vagrant package ubuntu16docker --output /disk2/tmp/ubuntu16docker/ubuntu16docker.box'
+  sh 'vagrant box add --force ubuntu16docker /disk2/tmp/ubuntu16docker/ubuntu16docker.box'
+end
+
+
+load "debpackage/Rakefile.rake"

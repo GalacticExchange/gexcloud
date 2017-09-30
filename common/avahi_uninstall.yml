@@ -1,0 +1,6 @@
+---
+- name: uninstall avahi
+  include: ../roles/avahi/tasks/uninstall.yml
+
+- name: remove /etc/avahi
+  shell: rm -rf /etc/avahi

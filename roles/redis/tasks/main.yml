@@ -1,0 +1,15 @@
+---
+# redis
+  - apt: update_cache=yes
+
+  - name: install redis-server
+    #apt: name=redis-server state=present
+    shell: apt-get -y --force-yes install redis-server
+
+  - name: autostart redis
+    shell: update-rc.d redis-server defaults
+
+  - name: start redis
+    shell: /etc/init.d/redis-server start
+
+

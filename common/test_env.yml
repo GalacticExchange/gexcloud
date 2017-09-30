@@ -1,0 +1,7 @@
+---
+- debug: msg="env={{environment}}"
+- debug: msg="server={{inventory_hostname}}, ansible={{ansible_hostname}}"
+- debug: msg="hosts={{play_hosts}}"
+- debug: msg="groups={{group_names}}"
+
+

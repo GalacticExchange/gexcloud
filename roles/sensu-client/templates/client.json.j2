@@ -1,0 +1,19 @@
+{
+  "client": {
+    "name": "{{ sensu_name }}",
+    "address": "{{ hostname }}",
+    "subscriptions": [
+      "client_node"
+    ],
+    "props": {
+        "node_id": "{{node_id}}",
+
+        "rabbitmq": {
+            "host": "{{rabbitmq_ip}}",
+            "vhost": "/sensu",
+            "user": "{{rabbitmq_user}}",
+            "password": "{{rabbitmq_password}}"
+        }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+---
+  - apt: update_cache=yes
+
+  - name: /var/www/temp
+    file: path=/var/www/temp state=directory mode=0775 owner={{ruby_user}} group=dev
+
+  - name: clone
+    command: chdir=/var/www/temp git clone https://github.com/ErikDubbelboer/phpRedisAdmin.git
+
+  - name: clone 2
+    command: chdir=/var/www/temp/phpRedisAdmin git clone https://github.com/nrk/predis.git vendor
+
+  - name: move
+    command: chdir=/var/www/temp/ mv phpRedisAdmin phpredisadmin
+
+  - name: move to html
+    command: mv /var/www/temp/phpredisadmin /var/www/html
+
+

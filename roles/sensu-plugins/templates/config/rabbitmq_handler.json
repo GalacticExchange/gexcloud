@@ -1,0 +1,8 @@
+{
+  "handlers": {
+    "rabbitmq": {
+      "type": "pipe",
+      "command": "/etc/sensu/plugins/rabbitmq_handler.rb"
+    }
+  }
+}

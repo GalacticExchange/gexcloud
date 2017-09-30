@@ -1,0 +1,24 @@
+---
+### input:
+# - server_host
+# - server_path
+# - mount_path
+
+- file: path={{mount_path}} state=directory mode=0775
+
+
+- name: edit /etc/fstab
+  lineinfile: >
+    dest=/etc/fstab
+    regexp="{{server_host}}:{{server_path}}.*"
+    line="{{server_host}}:{{server_path}}    {{mount_path}}  nfs auto,noatime,nolock,bg,nfsvers=4,intr,tcp,actimeo=1800 0 0"
+    state=present
+
+
+- name: umount
+  shell: sudo umount {{mount_path}}
+  ignore_errors: yes
+
+
+- name: mount now
+  shell: sudo mount -a

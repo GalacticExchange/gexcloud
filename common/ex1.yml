@@ -1,0 +1,32 @@
+---
+#- name: run
+#  roles:
+#    - { role: ../roles/dns, dns_nameservers: ["{{dns_server}}", '8.8.8.8'] }
+
+- hosts: "{{server}}"
+#- hosts: all
+  gather_facts: yes
+  sudo: yes
+  vars_files:
+    - "../roles/dns/defaults/main.yml"
+    - "vars/{{machine}}.yml"
+
+  tasks:
+    #- debug: msg="os={{ansible_os_family}}"
+
+    - name: run
+      vars:
+        dns_nameservers:
+          - "{{dns_server}}"
+          - '8.8.8.8'
+      include: ../roles/dns/tasks/main.yml
+
+
+# dns
+- hosts: all
+  sudo: true
+  gather_facts: true
+  vars_files:
+    - vars/{{machine}}.yml
+  roles:
+    - { role: ../roles/dns, dns_nameservers: ["{{dns_server}}", '8.8.8.8'] }

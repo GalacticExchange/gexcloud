@@ -1,0 +1,4 @@
+hostname: devproxy
+domainname: devproxy.gex
+
+dns_server: 51.0.10.20

@@ -1,0 +1,19 @@
+{
+  "client": {
+    "name": "server_api",
+    "address": "{{ sys_ip }}",
+    "subscriptions": [
+      "api_events", "client_node", "gex_server"
+    ],
+    "props": {
+        "node_id": "server_api",
+
+        "rabbitmq": {
+            "host": "{{rabbitmq_ip}}",
+            "vhost": "/sensu",
+            "user": "{{rabbitmq_user}}",
+            "password": "{{rabbitmq_password}}"
+        }
+    }
+  }
+}

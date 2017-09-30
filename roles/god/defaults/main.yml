@@ -1,0 +1,3 @@
+user: vagrant
+group: vagrant
+use_rvm: "0"

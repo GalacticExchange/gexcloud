@@ -1,0 +1,50 @@
+{
+  "common": {
+    "openvpn_ip": "46.172.71.56",
+    "proxy_ip": "46.172.71.55",
+    "dns_ip": "51.0.1.8",
+    "api_ip": "46.172.71.53",
+    "sensu_rabbitmq_host": "stats.devgex.net",
+    "sensu_rabbitmq_user": "sensu",
+    "sensu_rabbitmq_password": "PH_GEX_PASSWD1"
+  },
+
+  "node_type":"virtualbox",
+  "gex_hostname": "gexnode",
+  "app_only": false,
+  "cluster_name":"miniature-ursa-major",
+  "cluster_id": "875",
+  "cluster_uid": "3172191187268102",
+  "node_name": "bogdan-local",
+  "node_id": "1769",
+  "node_uid": "1722486216815669",
+  "static_ip": false,
+  "host": {
+    "vpn_server_port": "6780",
+    "vpn_client_ip": "51.128.44.249",
+    "vpn_server_ip": "51.128.44.248"
+  },
+  "hadoop": {
+    "name": "hadoop",
+    "image_name":"gex/hadoop_cdh",
+    "vpn_server_port": "6781",
+    "vpn_client_ip": "51.128.44.251",
+    "vpn_server_ip": "51.128.44.250"
+  },
+  "hue": {
+    "name": "hue",
+    "image_name":"gex/hue_cdh",
+    "vpn_server_port": "6782",
+    "vpn_client_ip": "51.128.44.253",
+    "vpn_server_ip": "51.128.44.252"
+  },
+  "sensu_name":"node_1722486216815669",
+  "sensu_node_id": "1722486216815669",
+  "master_ip": "51.77.3.107",
+  "master_host": "hadoop-master-875.gex",
+
+  "run_list": [
+    "recipe[gex::node_install]"
+  ]
+}
+

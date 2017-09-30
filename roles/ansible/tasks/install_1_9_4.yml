@@ -1,0 +1,24 @@
+---
+
+- name: install pip
+  apt: pkg={{item}} state=installed
+  with_items:
+    - python-pip
+    - python-dev
+
+- apt: update_cache=yes
+
+- name: install ansible 1.9.4
+  shell: sudo pip install ansible==1.9.4
+
+- file: path=/etc/ansible state=directory mode=0755
+
+- name: links for ansible
+  shell: sudo ln -s /usr/local/bin/ansible /usr/bin/ansible
+  ignore_errors: yes
+
+- name: links for ansible
+  shell: sudo ln -s /usr/local/bin/ansible-playbook /usr/bin/ansible-playbook
+  ignore_errors: yes
+
+

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+/etc/init.d/redis-server start
+service ssh start
+service rabbitmq-server start
+/etc/init.d/uchiwa start
+/etc/init.d/sensu-server start
+/etc/init.d/sensu-api start
+

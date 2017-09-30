@@ -1,0 +1,53 @@
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network.target docker.socket
+Requires=docker.socket
+
+[Service]
+Restart=on-abnormal
+TimeoutStartSec=0
+RestartSec=60
+ExecStart=/usr/bin/docker start -a hue-master-{{_cluster_id}}
+
+
+ExecStartPost=/disk2/vagrant/base/common/pipework {{ _private_bridge }} -i eth1 hue-master-{{ _cluster_id }}  {{_hue_ipv4}}/9
+
+ExecStartPost=/usr/bin/docker exec hue-master-{{ _cluster_id }} ip route add 51.128.0.0/16 via {{ _openvpn_private_ip_address }}
+ExecStartPost=/usr/bin/docker exec  hue-master-{{ _cluster_id }} ip route add 192.168.0.0/16 via {{ _openvpn_private_ip_address }}
+ExecStartPost=/usr/bin/docker exec  hue-master-{{ _cluster_id }} ip route add 172.16.0.0/16 via {{ _openvpn_private_ip_address }}
+ExecStartPost=/usr/bin/docker exec  hue-master-{{ _cluster_id }} ip route add 10.0.0.0/8 via {{ _openvpn_private_ip_address }}
+
+{% if _production | string() == "false" %}
+ExecStartPost=/usr/bin/docker exec  hue-master-{{ _cluster_id }} ip route replace 51.0.1.21 via 172.17.0.1 dev eth0
+{% else %}
+{% endif %}
+
+
+ExecStop=/usr/bin/docker stop hue-master-{{_cluster_id}}
+ExecStopPost=-/usr/bin/docker stop hue-master-{{_cluster_id}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

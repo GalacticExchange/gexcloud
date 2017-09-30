@@ -1,0 +1,22 @@
+{
+  "rabbitmq": {
+        "host": "{{rabbitmq_host}}",
+        "vhost": "/sensu",
+        "user": "sensu",
+        "password": "PH_GEX_PASSWD1"
+  },
+  "redis": {
+    "host": "localhost"
+  },
+  {% if kafka_broker_url is defined %}
+  "kafka": {
+    "broker": "{{kafka_broker_url}}"
+  },
+  {% endif %}
+  "api": {
+    "host": "localhost",
+    "port": 4567,
+    "user": "admin",
+    "password": "PH_GEX_PASSWD1"
+  }
+}

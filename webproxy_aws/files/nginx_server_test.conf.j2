@@ -1,0 +1,45 @@
+
+    server {
+        listen 5000;
+        server_name {{domainname}};
+
+        location / {
+            #resolver 10.0.2.3;
+
+            #set_by_lua $secret 'return os.getenv("JWT_SECRET")';
+
+            access_by_lua '
+                local jwt = require("nginx-jwt")
+                jwt.auth()
+            ';
+
+
+            #proxy_set_header X-Forwarded-Host $host;
+            #proxy_set_header X-Forwarded-Server $host;
+            #proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            #proxy_set_header Host      $host;
+            #proxy_set_header X-Real-IP $remote_addr;
+
+
+            #proxy_pass http://api.gex$uri;
+
+
+        }
+
+
+        location /www {
+            root /home/vagrant/www;
+
+            # First attempt to serve request as file, then
+            # as directory, then fall back to displaying a 404.
+            try_files $uri $uri/ /index.html;
+
+            #default_type 'text/plain';
+
+
+            #content_by_lua '
+            #   Hello,world!
+            #';
+        }
+
+    }

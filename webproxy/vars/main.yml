@@ -1,0 +1,16 @@
+hostname: webproxy
+domainname: webproxy.devgex.net
+domain_aliases: webproxy.gex
+
+jwt_secret: r7mjurp2vfjsu6611e45
+
+dns_server: 51.0.1.8
+public_ip: 51.1.1.2
+
+
+# logrotate
+logrotate_files:
+  - name: nginx
+    filepath: /opt/openresty/nginx/logs/*.log
+    user: vagrant
+    group: vagrant

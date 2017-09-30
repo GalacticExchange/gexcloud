@@ -1,0 +1,13 @@
+---
+- name: apt-get update
+  shell: apt-get update
+- name: install vb
+  shell: apt-get install -y virtualbox aria2 git sshpass
+- name: install vagrant
+  shell: aria2c -x 4 https://releases.hashicorp.com/vagrant/1.7.4/vagrant_1.7.4_x86_64.deb
+- name: create directory and pull
+  shell: >
+    mkdir /home/vagrant/git &&
+    cd /home/vagrant/git &&
+
+

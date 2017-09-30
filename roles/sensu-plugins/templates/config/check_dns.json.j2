@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "check-dns-internet": {
+      "handlers": ["mail_admin"],
+      "type": "standard",
+      "command": "/etc/sensu/plugins/check-dns-local.rb -d yahoo.com -s {{dns_server}}",
+      "subscribers": [
+        "gex_server"
+      ],
+      "publish": true,
+      "interval": 30,
+      "refresh": 600
+    },
+    "check-dns-gex": {
+      "handlers": ["mail_admin"],
+      "type": "standard",
+      "command": "/etc/sensu/plugins/check-dns-local.rb -d {{api_domain}} -s {{dns_server}}",
+      "subscribers": [
+        "gex_server"
+      ],
+      "publish": true,
+      "interval": 30,
+      "refresh": 600
+    }
+  }
+}

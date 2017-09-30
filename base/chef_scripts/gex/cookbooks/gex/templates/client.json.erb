@@ -1,0 +1,18 @@
+{
+  "client": {
+    "name": "<%=node.fetch('sensu_name')%>",
+    "address": "<%=node.fetch('gex_hostname') %>",
+    "subscriptions": [
+      "client_node"
+    ],
+    "props": {
+      "node_id": "<%=node.fetch('node_id')%>",
+      "rabbitmq": {
+        "host": "<%=node['common'].fetch('sensu_rabbitmq_host')%>",
+        "vhost": "/sensu",
+        "user": "<%=node['common'].fetch('sensu_rabbitmq_user')%>",
+        "password": "<%=node['common'].fetch('sensu_rabbitmq_password')%>"
+      }
+    }
+  }
+}

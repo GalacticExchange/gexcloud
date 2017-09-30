@@ -1,0 +1,24 @@
+---
+# input:
+# user: username
+# key_path: path to the key, relative to files/ssh_keys. example: mmx.pub
+
+# example:
+# ruby provision.rb api common/add_auth_ssh_key.yml -i devinventory -o "user=uadmin key_path=mmx.pub"
+
+- hosts: all
+  sudo : true
+  vars_files:
+    - ../vars_common/{{vagrant_machine_name}}.yml
+    - ../{{server}}/vars/{{vagrant_machine_name}}.yml
+
+  tasks:
+    - set_fact:
+        machine: "{{vagrant_machine_name}}"
+
+#
+    - name: Set up authorized_keys for the deploy user
+      authorized_key: user={{user}} key="{{ item }}"
+      with_file:
+        - ../{{server}}/files/ssh_keys/{{key_path}}
+

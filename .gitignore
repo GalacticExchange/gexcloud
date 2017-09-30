@@ -1,0 +1,24 @@
+
+.idea/
+**/.*
+.*
+**/*.box
+base/docker/*
+master/docker/*
+*~
+.idea/
+/target/
+/bin/
+*.deb
+
+
+# But not these files...
+!.gitignore
+!base/.dockerignore
+!api/deploy/.env.*
+!.chef
+!base/apptemplates/hadoop/superset/.superset
+!base/apptemplates/hadoop/superset/.bin
+
+api-docker/env.sh
+!/base/

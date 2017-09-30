@@ -1,0 +1,28 @@
+
+### avahi hosts
+
+#- hosts: all
+#  sudo: true
+#  gather_facts: false
+#  vars_files:
+#    - vars/{{machine}}.yml
+#  tasks:
+#
+## avahi - my sites
+#    - name: my sites in avahi
+#      lineinfile: >
+#        dest=/etc/avahi/hosts regexp=".*{{sys_domainname}}.*$"
+#        line="{{sys_ip}} {{sys_domainname}}"
+#        state=present
+#
+#    - name: my sites in avahi
+#      lineinfile: >
+#        dest=/etc/avahi/hosts regexp=".*{{api_domainname}}.*$"
+#        line="{{api_ip}} {{api_domainname}}"
+#        state=present
+#
+#    - name: my sites in avahi
+#      lineinfile: >
+#        dest=/etc/avahi/hosts regexp=".*{{website_domainname}}.*$"
+#        line="{{website_ip}} {{website_domainname}}"
+#        state=present

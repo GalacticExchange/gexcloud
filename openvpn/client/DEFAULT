@@ -1,0 +1,7 @@
+client
+dev tun
+iroute = 192.0.0.0/8
+iroute = 10.0.0.0/8
+iroute = 172.0.0.0/8
+iroute = 51.0.0.0/24
+

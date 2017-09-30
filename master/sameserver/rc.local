@@ -1,0 +1,11 @@
+#!/bin/sh -e
+brctl addbr overlay
+ifconfig overlay up
+service overlay restart
+ip addr add 51.77.0.0/16 dev overlay
+ip addr add 51.78.0.0/16 dev overlay
+ip addr add 51.0.1.50/16 dev eth0
+ip route add 51.1.0.50/16 dev eth0
+ip route del 51.0.0.0/8 dev eth0
+51.128.0.0/16 via 51.77.0.0 dev eth1
+exit 0

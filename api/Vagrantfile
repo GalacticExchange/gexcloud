@@ -1,0 +1,63 @@
+require_relative "../common/vagrant/utils.rb"
+
+
+def provision_api(config, settings, global_settings, name)
+
+
+  configure_standard_box_image(config, global_settings)
+
+#dev.vm.network "forwarded_port", guest: 5672, host: 5672
+
+#main.vm.network "forwarded_port", guest: 5672, host: 5672
+#main.vm.network "forwarded_port", guest: 443, host: 5672
+
+
+# main.vm.network "forwarded_port", guest: 22, host: 5024
+# main.vm.network "forwarded_port", guest: 80, host: 8080
+# main.vm.network "forwarded_port", guest: 8000, host: 8000
+
+
+  config.vm.define name, primary: false, autostart: false do |m|
+
+    configure_standard_net_and_ram(m, settings, global_settings)
+
+    # enable_gui(m)
+
+    extra_vars = {
+        machine: name,
+        _private_ip: settings[:PRIVATE_IP],
+        _private_mask: settings[:PRIVATE_MASK],
+        _private_ip6: settings[:PRIVATE_IPV6],
+        _public_ip: settings[:PUBLIC_IP],
+        _public_mask: settings[:PUBLIC_MASK],
+        _gateway: settings[:GATEWAY]
+    }
+
+
+    provision_ansible m, settings, "provision", "playbook.yml", extra_vars
+
+    provision_ansible m, settings, "fixes", "fixes.yml", extra_vars
+
+    provision_ansible m, settings, "deploy", "deploy.yml", extra_vars
+
+
+    provision_ansible m, settings, "app_init", "app_init.yml", extra_vars
+
+    provision_shell m, "restartelastic", "sudo service elasticsearch restart"
+
+    if settings[:NAME] == "main"
+      m.vm.provision "sameserver", type: "shell", run: "always", inline: "/sbin/ip route replace  51.76.0.0/14 via 10.0.2.2"
+    end
+  end
+
+
+end
+
+
+configure_all_boxes "provision_api", API_SETTINGS
+
+
+
+
+
+

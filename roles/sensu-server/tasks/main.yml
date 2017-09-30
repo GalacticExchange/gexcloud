@@ -1,0 +1,86 @@
+---
+
+
+
+  - name: add user 'sensu'
+    vars:
+      username: "{{sensu_admin_user}}"
+      password: "{{sensu_admin_password}}"
+      vhost: "/sensu"
+    include: ../../../roles/rabbitmq/tasks/add_user.yml
+
+
+  - name: add user 'sensu_client'
+    vars:
+      username: "{{sensu_client_user}}"
+      password: "{{sensu_client_password}}"
+      vhost: "/sensu"
+    include: ../../../roles/rabbitmq/tasks/add_user.yml
+
+
+
+# RabbitMQ Plugins
+#    - name:  stop rabbitmq
+#      shell: service rabbitmq-server stop
+
+#    - name: get recent history plugin
+#      shell: >
+#        wget http://www.rabbitmq.com/community-plugins/v3.5.x/rabbitmq_recent_history_exchange-1.2.1-rmq3.5.x-87b7ac4b.ez
+#        -O /usr/lib/rabbitmq/lib/rabbitmq_server-3.5.6/plugins/rabbitmq_recent_history_exchange-1.2.1-rmq3.5.x-87b7ac4b.ez
+#    - name: enable history
+#      shell: rabbitmq-plugins enable rabbitmq_recent_history_exchange
+
+#    - name:  start server
+#      shell: service rabbitmq-server start
+
+#    - name: list plugins
+#      shell: rabbitmq-plugins list
+
+
+# repo
+
+  - name: pre install sensu
+    shell: >
+      sudo wget -q http://repositories.sensuapp.org/apt/pubkey.gpg -O- | sudo apt-key add -;
+      sudo echo "deb     http://repositories.sensuapp.org/apt sensu main" | sudo tee /etc/apt/sources.list.d/sensu.list;
+      sudo apt-get update;
+
+  - name: install sensu 0.21.0
+    #apt: name=sensu state=present
+    shell: sudo apt-get -y --force-yes install sensu=0.21.0-1;
+
+  - name: post install sensu
+    shell: echo "sensu hold" | dpkg --set-selections;
+
+
+  - name: patch sensu
+    shell: sudo wget https://raw.githubusercontent.com/maxivak/sensu/master/lib/sensu/server/process.rb -O /opt/sensu/embedded/lib/ruby/gems/2.2.0/gems/sensu-0.21.0/lib/sensu/server/process.rb
+
+
+# ruby gems
+  - name: install gems
+    shell: sudo GEM_PATH=/opt/sensu/embedded/lib/ruby/gems/2.2.0 /opt/sensu/embedded/bin/gem install {{item}}
+    with_items:
+      - sensu-plugin
+      - bunny
+      - redis
+      - pony
+      - ruby-kafka
+      - docker-api
+      - net_http_unix
+      - sys-proctable
+      - faraday
+
+
+# run
+  - name:  autostart sensu-server
+    shell: sudo update-rc.d sensu-server defaults
+
+  - name:  autostart server-api
+    shell: sudo update-rc.d sensu-api defaults
+
+  - name: start sensu-server
+    shell: sudo /etc/init.d/sensu-server start
+
+  - name:  start sensu-api
+    shell: sudo /etc/init.d/sensu-api start

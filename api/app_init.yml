@@ -1,0 +1,16 @@
+# init app
+
+- hosts: all
+  sudo: true
+
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+    - name: init app
+      become: yes
+      become_user: uadmin
+      shell: source /home/uadmin/.bash_profile && rvm use 2.2.4 && cd /var/www/apps/apihub/current && RAILS_ENV={{app_api_env}} rake install:init && RAILS_ENV={{app_api_env}} rake install:init
+      args:
+        executable: /bin/bash

@@ -1,0 +1,195 @@
+#desc "Build all containers"
+#multitask :all => [:hadoop_client['cdh'], :hadoop_client['plain'], :hue['cdh'], :hue['plain'] ]
+
+# noinspection RubyUnusedLocalVariable
+verbose = true
+require 'aws-sdk'
+require_relative '../ruby/deploy'
+require_relative '../../deploy_credentials/sync_container'
+
+
+now = `date +%m_%d_%Y_%s`
+VERSION = "0.9.1.#{now}".strip
+
+
+desc "Build all containers"
+task :all do
+  Rake::MultiTask[:hadoop_client].invoke('cdh')
+  Rake::MultiTask[:hadoop_client].invoke('plain')
+  Rake::MultiTask[:hue].invoke('cdh')
+  Rake::MultiTask[:hue].invoke('plain')
+end
+
+
+task :setup do
+  mkdir_p '/vagrant/docker'
+  sh 'cd ..;vagrant up build'
+  vsh 'sudo rm -rf /home/vagrant/apptemplates && ' \
+   'sudo cp -rf /vagrant/apptemplates /home/vagrant &&'\
+  'sudo cp -rf /vagrant/auth /home/vagrant/apptemplates/hadoop &&'\
+  'sudo cp -rf /vagrant/auth /home/vagrant/apptemplates/hue &&'\
+  'sudo cp -rf /vagrant/openvpn /home/vagrant/apptemplates/hadoop &&'\
+  'sudo cp -rf /vagrant/openvpn /home/vagrant/apptemplates/hue &&'\
+  'sudo cp -rf /vagrant/slaveservices /home/vagrant/apptemplates/hadoop &&'\
+  'sudo cp -rf /vagrant/slaveservices /home/vagrant/apptemplates/hue &&' \
+  'sudo cp -rf /vagrant/ruby_scripts /home/vagrant/apptemplates/hadoop &&'\
+  'sudo cp -rf /vagrant/ruby_scripts /home/vagrant/apptemplates/hue'
+  `cd ..; /usr/bin/vagrant up build`
+end
+
+
+desc "Clean old containers"
+# noinspection RubyUnusedLocalVariable
+task :clean_old_local, :type do |task, args|
+  clean_old_local_containers args[:type]
+end
+
+
+def build_container(docker_file_name, app_name, image_name)
+  working_dir="/home/vagrant/apptemplates/#{app_name}"
+
+  vsh "docker rm -v $(docker ps -a -q ) |true"
+
+  vsh "m4 -I /home/vagrant/apptemplates -I #{working_dir} #{working_dir}/#{docker_file_name} > /tmp/#{docker_file_name}_full"
+  vsh "cp -f /tmp/#{docker_file_name}_full #{working_dir}"
+  vsh "docker build -f #{working_dir}/#{docker_file_name}_full -t gex/#{image_name} /home/vagrant/apptemplates/#{app_name}"
+  vsh "docker export -o /vagrant/docker/#{image_name}.tar $(sudo docker run -d gex/#{image_name} bash)"
+end
+
+
+desc "Deploy all client containers to aws, main or dev"
+task :deploy_all, :where do |task, args|
+  where = args[:where]
+
+  if where == "aws"
+    clear_bucket_aws ('gex-containers') #TODO should we clear?
+  else
+    ssh_cmd_server where, 'sudo mkdir -p /var/www/html/containers; sudo chmod a+rwx /var/www/html/containers'
+  end
+
+  deploy_container where, 'hue_plain', VERSION
+  deploy_container where, 'hue_cdh', VERSION
+  deploy_container where, 'hadoop_plain_client', VERSION
+  deploy_container where, 'hadoop_cdh_client', VERSION
+  clean_old_local_containers where if where != "aws"
+end
+
+
+desc "Deploy hadoop container to aws or main repository; plain or cdh"
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :deploy_hadoop, [:where, :type] do |task, args|
+  start = Time.now
+  args.with_defaults(type: "cdh")
+  deploy_container args[:where], "hadoop_#{args[:type]}_client", VERSION
+  finish = Time.now
+  puts 'Time elapsed - ' + Time.at(finish-start).utc.strftime("%H:%M:%S")
+end
+
+desc "Deploy hue container to aws  or main repository; plain or cdh"
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :deploy_hue, [:where, :type] do |task, args|
+  args.with_defaults(type: "cdh")
+  deploy_container args[:where], "hue_#{args[:type]}", VERSION
+end
+
+
+def deploy_container(where, appname, version)
+  sh "mkdir -p /tmp/deploy"
+
+  #sh "mv ../docker/#{appname}.tar ../docker/gex-#{appname}-#{VERSION}.tar"
+  dir = `cd ../docker && pwd`.strip
+  sh "ln -s #{dir}/#{appname}.tar /tmp/deploy/gex-#{appname}-#{VERSION}.tar"
+
+  size=`stat --printf="%s" #{dir}/#{appname}.tar`
+  create_version_file(version, size, "/tmp/deploy/#{appname}-version.txt", "#{dir}/#{appname}.tar")
+
+  if where != "aws"
+    ssh_cmd_server "rm -rf /var/www/html/containers/#{appname}*", where
+    sh "chmod a+r ../docker/*"
+    sh "chmod a+t /tmp/deploy/*"
+    scp_local where, "/tmp/deploy/gex-#{appname}-#{VERSION}.tar", "/var/www/html/containers/gex-#{appname}-#{VERSION}.tar"
+    scp_local where, "/tmp/deploy/#{appname}-version.txt", "/var/www/html/containers/"
+  end
+
+  if where == "aws"
+    upload_amazon "/tmp/deploy/gex-#{appname}-#{VERSION}.tar", 'gex-containers', false
+    upload_amazon "/tmp/deploy/#{appname}-version.txt", 'gex-containers', true
+  end
+end
+
+
+desc "Build hue plain or CDH"
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :hue, [:arg1] => :setup do |task, args|
+  args.with_defaults(type: "cdh")
+  build_container "Dockerfile_#{args[:arg1]}", "hue", "hue_#{args[:arg1]}"
+end
+
+
+desc "Build hadoop client, plain or CDH"
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :hadoop_client, [:arg1] => :setup do |task, args|
+  args.with_defaults(type: "cdh")
+  build_container "Dockerfile_#{args[:arg1]}_client", "hadoop", "hadoop_#{args[:arg1]}_client"
+end
+
+
+desc "Build master plain or CDH"
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :hadoop_master, [:arg1] => :setup do |task, args|
+  args.with_defaults(type: "cdh")
+  build_container "Dockerfile_#{args[:arg1]}_master", "hadoop", "hadoop_#{args[:arg1]}_master"
+end
+
+desc "Clean space"
+task :clean_space do
+  vsh "docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi"
+end
+
+desc "Redeploy all master containers to [main] or [prod]"
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :deploy_master, [:where, :type] do |task, args|
+  args.with_defaults(type: "cdh")
+  deploy_master_cont args[:where], args[:type]
+end
+
+desc 'Sync hadoop [cdh]/[plain]'
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :sync_hadoop, [:type] do |task, args|
+  sh "mkdir -p /tmp/deploy"
+  sh "echo version=#{VERSION} > /tmp/deploy/hadoop_#{args[:type]}_client-version.txt"
+
+  dir = `cd ../docker && pwd`.strip
+  sh "ln -s #{dir}/hadoop_#{args[:type]}_client.tar /tmp/deploy/gex-hadoop_#{args[:type]}_client-#{VERSION}.tar"
+
+  sync_container("/tmp/deploy/gex-hadoop_#{args[:type]}_client-#{VERSION}.tar")
+  upload_amazon("/tmp/deploy/hadoop_#{args[:type]}_client-version.txt", 'gex-containers', true)
+
+end
+
+desc 'Sync hue [cdh]/[plain]'
+# noinspection RubyUnusedLocalVariable,RubyUnusedLocalVariable
+task :sync_hue, [:type] do |task, args|
+  sh "mkdir -p /tmp/deploy"
+  sh "echo version=#{VERSION} > /tmp/deploy/hue_#{args[:type]}-version.txt"
+
+  dir = `cd ../docker && pwd`.strip
+  sh "ln -s #{dir}/hue_#{args[:type]}.tar /tmp/deploy/gex-hue_#{args[:type]}-#{VERSION}.tar"
+
+  sync_container("/tmp/deploy/gex-hue_#{args[:type]}-#{VERSION}.tar")
+  upload_amazon("/tmp/deploy/hue_#{args[:type]}-version.txt", 'gex-containers', true)
+end
+
+
+desc 'Deploy master aws'
+task :deploy_master_aws do
+
+  sh 'mkdir -p /tmp/deploy'
+  sh "cp ../docker/hadoop_cdh_master.tar /tmp/deploy/hadoop_cdh_master-#{VERSION}.tar"
+  upload_amazon("/tmp/deploy/hadoop_cdh_master-#{VERSION}.tar", 'gex-containers', false)
+
+  sh"echo #{VERSION} > /tmp/deploy/hadoop_cdh_master.txt"
+  upload_amazon('/tmp/deploy/hadoop_cdh_master.txt', 'gex-containers', true)
+
+
+end

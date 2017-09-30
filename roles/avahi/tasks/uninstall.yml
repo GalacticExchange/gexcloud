@@ -1,0 +1,3 @@
+---
+- name: uninstall avahi
+  apt: pkg=avahi-daemon state=absent

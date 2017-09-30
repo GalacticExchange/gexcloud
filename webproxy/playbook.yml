@@ -1,0 +1,326 @@
+---
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+    - hostname: name={{hostname}}
+
+
+
+### swap
+    - name: swap
+      vars:
+        size: "2G"
+        filename: "/swapfile"
+      include: ../roles/swap/tasks/main.yml
+
+### hosts allow deny
+
+    - name: hosts allow/deny
+      include: ../roles/hosts/tasks/main.yml
+
+
+
+
+
+### base
+### ufw
+
+    - name: update
+      shell: apt-get update
+
+
+    - name: remove ufw
+      apt: pkg=ufw state=absent
+
+
+
+    - name: install keyczar
+      shell: apt-get install -y --force-yes python-keyczar
+
+    - name: install bashdb
+      apt: pkg=bashdb state=latest
+
+    - name: install zookeeper
+      shell: sudo gem instal zookeeper
+
+
+
+### openresty
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+  tasks:
+    - name: dir /home/vagrant/temp
+      file: path=/home/vagrant/temp state=directory mode=0700 owner=vagrant group=vagrant
+
+
+    - name: install libs
+      apt: pkg={{item}} state=installed
+      with_items:
+        - libreadline-dev
+        - libncurses5-dev
+        - libpcre3-dev
+        - libssl-dev
+        - perl
+        - make
+        - build-essential
+
+
+#    - name: download openresty
+#      command: chdir=/home/vagrant/temp wget https://openresty.org/download/ngx_openresty-1.7.10.2.tar.gz
+
+    #- name: download openresty
+    #  copy: src=files/ngx_openresty-1.7.10.2.tar.gz dest=/home/vagrant/temp/ngx_openresty-1.7.10.2.tar.gz owner=vagrant group=vagrant mode=0775
+
+    - name: download openresty
+      get_url:
+        url: http://files.gex/bin/openresty/ngx_openresty-1.7.10.2.tar.gz
+        dest: /home/vagrant/temp/ngx_openresty-1.7.10.2.tar.gz
+        mode: 0775
+        owner: vagrant
+        group: vagrant
+
+
+    - name: unzip openresty
+      command: chdir=/home/vagrant/temp tar xzvf ngx_openresty-1.7.10.2.tar.gz
+
+
+# https://www.openssl.org/source/openssl-1.0.2e.tar.gz
+    #- name: download openssl
+    #  copy: src=files/openssl-1.0.2e.tar.gz dest=/home/vagrant/temp/openssl-1.0.2e.tar.gz owner=vagrant group=vagrant mode=0775
+
+    - name: download openssl
+      get_url:
+        url: http://files.gex/bin/openresty/openssl-1.0.2e.tar.gz
+        dest: /home/vagrant/temp/openssl-1.0.2e.tar.gz
+        mode: 0775
+        owner: vagrant
+        group: vagrant
+
+
+    - name: unzip openssl
+      command: chdir=/home/vagrant/temp tar vxf openssl-1.0.2e.tar.gz
+
+    - name: install openresty
+      command: chdir=/home/vagrant/temp/ngx_openresty-1.7.10.2 ./configure --prefix=/opt/openresty --with-luajit --with-pcre-jit --with-ipv6 --with-http_ssl_module
+
+    - name: openresty make
+      command: chdir=/home/vagrant/temp/ngx_openresty-1.7.10.2 make
+
+    - name: openresty make install
+      command: chdir=/home/vagrant/temp/ngx_openresty-1.7.10.2 make install
+
+
+# lua for openresty
+    #- shell: /opt/openresty/luajit -b /path/to/input_file.lua /path/to/output_file.luac
+
+# systemd service
+    - name: file nginx.service
+      copy: src=files/systemd/nginx.service dest=/etc/systemd/system/nginx.service owner=root group=root mode=775
+
+    - name: enable service
+      shell: sudo systemctl enable nginx
+
+    - shell: sudo /bin/systemctl daemon-reload
+
+    - name: start service
+      shell: sudo systemctl start nginx
+
+#    - name: autostart nginx
+#      shell: sudo update-rc.d nginx defaults
+
+# NOT USED. init.d script
+#    - name: file /etc/init.d/nginx
+#      copy: src=files/etc_init_d_nginx dest=/etc/init.d/nginx owner=root group=root mode=775
+
+#    - name: reload nginx
+#      shell: /etc/init.d/nginx reload
+
+#    - name: autostart nginx
+#      shell: sudo update-rc.d nginx defaults
+
+
+# check nginx
+# /opt/openresty/nginx/sbin/nginx -V
+# check config:
+# sudo /opt/openresty/nginx/sbin/nginx -t
+
+
+
+## config nginx
+# /opt/openresty/nginx/conf/nginx.conf.j2
+
+    - name: copy nginx.conf.j2
+      copy: src=files/nginx.conf.j2 dest=/opt/openresty/nginx/conf/nginx.conf  owner=vagrant group=vagrant mode=775
+
+    - name: dir sites-enabled
+      file: path=/opt/openresty/nginx/sites-enabled state=directory mode=0775 owner=vagrant group=vagrant
+
+    - name: dir sites-available
+      file: path=/opt/openresty/nginx/sites-available state=directory mode=0775 owner=vagrant group=vagrant
+
+    - name: restart nginx
+      shell: sudo systemctl restart nginx
+
+
+### nginx-jwt lua scripts
+# https://github.com/auth0/nginx-jwt
+
+    #- name: download nginx-jwt.tar.gz
+    #  copy: src=files/nginx-jwt.tar.gz dest=/home/vagrant/nginx-jwt.tar.gz  owner=vagrant group=vagrant mode=775
+
+    - name: download nginx-jwt.tar.gz
+      get_url:
+        url: http://files.gex/bin/openresty/nginx-jwt.tar.gz
+        dest: /home/vagrant/nginx-jwt.tar.gz
+        mode: 0775
+        owner: vagrant
+        group: vagrant
+
+
+    - name: unzip
+      command:  chdir=/home/vagrant  tar -zxvf nginx-jwt.tar.gz
+
+#    - name: copy jwt lua scripts to main lib folder
+#      shell: >
+#        cd /home/vagrant/nginx-jwt;
+#        cp -fr *.lua /opt/openresty/lualib/resty;
+#        cp -fr lib/* /opt/openresty/luajit/lib;
+
+    - name: replace nginx-jwt.lua
+      copy: src=files/nginx-jwt/nginx-jwt.lua dest=/home/vagrant/nginx-jwt/nginx-jwt.lua force=true
+
+    - name: copy gex_config.lua
+      template: src=files/gex_config.lua.j2 dest=/home/vagrant/nginx-jwt/gex_config.lua force=true
+
+
+# sources of nginx-jwt
+    #- name: download nginx-jwt sources
+    #  copy: src=files/nginx-jwt-sources-1.0.1.tar.gz dest=/home/vagrant/temp/nginx-jwt-sources.tar.gz
+
+
+    - name: download nginx-jwt sources
+      get_url:
+        url: http://files.gex/bin/openresty/nginx-jwt-sources-1.0.1.tar.gz
+        dest: /home/vagrant/temp/nginx-jwt-sources.tar.gz
+        mode: 0775
+        owner: vagrant
+        group: vagrant
+
+
+    - name: unzip nginx-jwt sources
+      command:  chdir=/home/vagrant/temp  tar -zxvf nginx-jwt-sources.tar.gz
+
+
+    - name: rename nginx-jwt sources
+      command:  chdir=/home/vagrant/temp  mv nginx-jwt-1.0.1 nginx-jwt-sources
+
+
+
+# edit /etc/profile
+    - name: copy script for /etc/profile
+      template: src=files/etc_profile_jwt_token.sh.j2 dest=/tmp/etc_profile_jwt_token.sh owner=root group=root mode=775
+
+    - name: add to /etc/profile
+      command: bash /tmp/etc_profile_jwt_token.sh
+
+
+## Install Node.js & jsonwebtoken
+    - name: install nodejs & jsonwebtoken - copy
+      copy: src=files/install_nodejs_jsonwebtoken.sh dest=/tmp/install_nodejs_jsonwebtoken.sh owner=vagrant group=vagrant mode=775
+
+    - name: install nodejs & jsonwebtoken
+      #sudo: yes
+      #sudo_user: vagrant
+      command: bash /tmp/install_nodejs_jsonwebtoken.sh
+
+
+
+## add lua-resty-cookie lib
+# https://github.com/cloudflare/lua-resty-cookie
+
+#    - name: lua-resty-cookie lib
+#      copy: src=files/lua-resty-cookie/cookie.lua dest=/opt/openresty/lualib/resty/cookie.lua force=true  owner=vagrant group=vagrant mode=0775
+
+
+
+### nginx default.conf
+
+    - name: create nginx server default.conf
+      template: >
+        src=files/default.conf.j2
+        dest=/opt/openresty/nginx/sites-available/default.conf
+        force=yes
+        owner=vagrant group=vagrant mode=0775
+
+    - name: enable server
+      shell: ln -s /opt/openresty/nginx/sites-available/default.conf /opt/openresty/nginx/sites-enabled/default.conf
+      ignore_errors: yes
+
+
+
+## fix permissions
+
+    - name: fix permissions
+      shell: >
+        sudo chown vagrant:vagrant -R /opt/openresty;
+        sudo chmod g+x -R /opt/openresty;
+        sudo chown vagrant:vagrant -R /home/vagrant/nginx-jwt;
+        sudo chmod g+x -R /home/vagrant/nginx-jwt;
+        sudo chown vagrant:vagrant -R /home/vagrant/temp;
+        sudo chmod g+x -R /home/vagrant/temp;
+
+
+
+### dns
+    - set_fact:
+        dns_nameservers:
+          - "{{dns_server}}"
+          - '8.8.8.8'
+
+        dns_remove_resolvconf: true
+        dns_domain: "localdomain"
+        dns_searchs:
+           - "localdomain"
+        dns_dhclient_rule: "supersede" # can be supersede or prepend
+
+        dns_dhclient_file: "/etc/dhcp/dhclient.conf"
+        dns_forced_in_dhclientconf: true
+
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+  roles:
+     - { role: ../roles/dns }
+
+#    - name: change DNS servers
+#      include: ../roles/dns/tasks/main.yml
+
+
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+  tasks:
+
+    - name: change DNS servers - hard
+      include: ../roles/dns/tasks/set_dns_resolv.yml
+
+    - name: run standard tasks
+      include: ../roles/standard/tasks/standard.yml
+
+    - name: public proxy ip address
+      shell: echo {{ public_ip }} {{ domainname }} >> /etc/hosts
+
+
+
+

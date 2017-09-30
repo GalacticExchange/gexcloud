@@ -1,0 +1,19 @@
+---
+#- hosts: "{{ (machine == 'devdns') | ternary('dev','main') }}"
+- hosts: all
+  gather_facts: no
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+
+### god config
+    - name: copy god /opt/god/dns_not_work.rb
+      sudo: true
+      template: src=files/god/dns_not_work.rb dest=/opt/god/dns_not_work.rb owner=vagrant group=vagrant mode=0775
+
+    - name: god master.conf
+      sudo: true
+      template: src=files/god/master.conf.j2 dest=/opt/god/master.conf owner=vagrant group=vagrant mode=0775
+
+### app
+    - include: deploy_app.yml

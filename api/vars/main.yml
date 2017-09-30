@@ -1,0 +1,145 @@
+#
+private_ip: 51.0.1.21
+hostname: api
+domainname: api.gex
+
+backups_dir_base: /mnt/data/backups/dev
+
+#
+dns_server: 51.0.1.8
+
+#
+dns_hosts:
+  - name: git.gex
+    ip: 51.1.1.120
+  - name: dns.gex
+    ip: 51.0.1.8
+
+  - name: api.gex
+    ip: 51.0.1.21
+  - name: hub.gex
+    ip: 51.0.1.21
+
+  - name: master.gex
+    ip: 51.0.1.31
+  - name: files.gex
+    ip: 51.0.1.6
+  - name: rabbit.gex
+    ip: 51.0.1.5
+  - name: openvpn.gex
+    ip: 51.0.1.8
+  - name: proxy.gex
+    ip: 51.0.1.15
+  - name: webproxy.gex
+    ip: 51.0.1.16
+
+
+
+
+#
+sys_domain: api.gex
+sys_ip: 51.1.1.21
+sys_port: 8000
+
+api_domain: api.gex
+api_ip: 51.1.1.21
+api_port: 80
+
+hub_domain: hub.gex
+hub_ip: 51.1.1.21
+hub_port: 80
+
+
+# apps
+app_api_env: main
+app_api_name: apihub
+
+
+
+# tests
+tests_git_repo: git@git.gex:gex/tests.git
+
+
+# files
+files_host: files.gex
+ansible_git_repo: git@git.gex:gex/ansible.git
+
+vagrant_git_repo: git@git.gex:gex/gexcloud.git
+
+
+chef_git_repo: git@git.gex:gex/chef-repo.git
+
+
+
+#
+ruby_user: uadmin
+ruby_user_password: PH_GEX_PASSWD1
+ruby_group: dev
+
+#
+ssh_keys:
+  - filename: mmx.pub
+
+
+
+
+
+# mysql
+mysql_root_password: PH_GEX_PASSWD1
+mysql_databases:
+  - name: gex
+    encoding: utf8
+    collation: utf8_unicode_ci
+
+  - name: gex_logs
+    encoding: utf8
+    collation: utf8_unicode_ci
+
+mysql_users:
+  - name: gex
+    host: "localhost"
+    password: PH_GEX_PASSWD1
+    priv: "gex.*:ALL"
+
+  - name: gex
+    host: "localhost"
+    password: PH_GEX_PASSWD1
+    priv: "gex_logs.*:ALL"
+
+
+mysql_enabled_on_startup: yes
+overwrite_global_mycnf: yes
+mysql_log: ""
+mysql_log_error: /var/log/mysql/error.log
+mysql_syslog_tag: mysqld
+
+mysql_slow_query_log_enabled: no
+mysql_slow_query_log_file: /var/log/mysql/slow.log
+mysql_slow_query_time: 2
+
+
+# phpredisadmin
+phpredisadmin_password: PH_GEX_PASSWD1
+
+
+# rabbit
+rabbitmq_host: rabbit.gex
+rabbitmq_ip: 51.0.1.5
+rabbitmq_user: sensu
+rabbitmq_password: PH_GEX_PASSWD1
+
+
+
+
+# logrotate
+logrotate_files:
+  - name: gex_api_log
+    filepath: /var/www/apps/apihub/shared/log/*.log
+    user: uadmin
+    group: dev
+
+  - name: god
+    filepath: /var/www/logs/god.log
+    user: uadmin
+    group: dev
+

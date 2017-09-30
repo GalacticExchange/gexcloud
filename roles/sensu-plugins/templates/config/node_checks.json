@@ -1,0 +1,32 @@
+{
+  "checks": {
+    "metrics_cpu": {
+      "handlers": ["kafka"],
+      "type": "metric",
+      "command": "/etc/sensu/plugins/metrics-cpu.rb",
+      "subscribers": [
+        "client_node"
+      ],
+      "interval": 10
+    },
+    "metrics_memory": {
+      "handlers": ["kafka"],
+      "type": "metric",
+      "command": "/etc/sensu/plugins/metrics-memory.rb",
+      "subscribers": [
+        "client_node"
+      ],
+      "interval": 10
+    },
+    "metrics_hdd": {
+      "handlers": ["kafka"],
+      "type": "metric",
+      "command": "/etc/sensu/plugins/metrics-hdd.rb",
+      "subscribers": [
+        "client_node"
+      ],
+      "interval": 10
+    }
+
+  }
+}

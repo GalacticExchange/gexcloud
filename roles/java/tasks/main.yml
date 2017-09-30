@@ -1,0 +1,60 @@
+---
+  #- name: copy script file
+  #  copy: src=install_java_oracle.sh dest=/tmp/install_java.sh owner=root group=root mode=775
+
+  #- name: install java
+  #  command: bash /tmp/install_java.sh
+
+  - file: path=/usr/local/java state=directory mode=0775 owner=root group=root
+
+  #- copy: src=jdk-8u65-linux-x64.tar.gz dest=/usr/local/java/jdk-8u65-linux-x64.tar.gz owner=root group=root mode=775
+
+  - name: download jdk
+    get_url:
+      url: http://files.gex/bin/java/jdk-8u65-linux-x64.tar.gz
+      dest: /usr/local/java/jdk-8u65-linux-x64.tar.gz
+      mode: 0775
+      owner: root
+      group: root
+
+
+  - name: extract archive
+    command: chdir=/usr/local/java tar -zxvf  jdk-8u65-linux-x64.tar.gz
+
+
+# edit /etc/profile
+  - name: copy script for /etc/profile
+    copy: src=java_add_profile.sh dest=/tmp/java_add_profile.sh owner=root group=root mode=775
+
+  - name: add to /etc/profile
+    command: bash /tmp/java_add_profile.sh
+
+
+#  - command: sh -c "printf 'JAVA_HOME=/usr/local/java/jdk1.8.0_65\n' >> /etc/profile"
+
+#  - set_fact:
+#      java_path: 'PATH=$PATH:$HOME/bin:$JAVA_HOME/bin'
+
+#  - debug: msg="path {{ java_path }}"
+
+#  - name: add PATH to /etc/profile
+#    command: sh -c "printf 'PATH=\\$PATH:\\$HOME/bin:\\$JAVA_HOME/bin\n' >> /etc/profile"
+#  - command: sh -c "printf 'export JAVA_HOME\n' >> /etc/profile"
+#  - command: sh -c "printf 'export PATH\n' >> /etc/profile"
+
+
+
+# Tell the system that the new Oracle Java version is available by the following commands:
+  - command: sudo update-alternatives --install "/usr/bin/java" "java" "/usr/local/java/jdk1.8.0_65/bin/java" 1
+  - command: sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/local/java/jdk1.8.0_65/bin/javac" 1
+  - command: sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/local/java/jdk1.8.0_65/bin/javaws" 1
+
+# Make Oracle Java JDK as default:
+  - command: sudo update-alternatives --set java /usr/local/java/jdk1.8.0_65/bin/java
+  - command: sudo update-alternatives --set javac /usr/local/java/jdk1.8.0_65/bin/javac
+  - command: sudo update-alternatives --set javaws /usr/local/java/jdk1.8.0_65/bin/javaws
+
+
+  # Reload system wide PATH /etc/profile
+#  - command: source /etc/profile
+

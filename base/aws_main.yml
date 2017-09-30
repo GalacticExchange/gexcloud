@@ -1,0 +1,3 @@
+include aws_start.yml
+include ubuntu15_docker.yml
+include playbook_image.yml

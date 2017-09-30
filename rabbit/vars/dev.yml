@@ -1,0 +1,39 @@
+hostname: devrabbit
+
+#
+rabbitmq_host: 51.0.1.19
+rabbitmq_ip: 51.0.1.19
+rabbitmq_admin_user: admin
+rabbitmq_admin_password: PH_GEX_PASSWD1
+
+# sensu server
+sensu_admin_user: sensu
+sensu_admin_password: PH_GEX_PASSWD1
+
+sensu_client_user: sensu_client
+sensu_client_password: PH_GEX_PASSWD1
+
+
+# kafka
+kafka_broker_url: "10.1.0.12:9092"
+
+# api
+api_domain: devapi.gex
+api_host: 51.0.12.22
+
+# logrotate
+logrotate_files:
+  - name: rabbitmq
+    filepath: /var/log/rabbitmq/*.log
+    user: rabbitmq
+    group: rabbitmq
+
+  - name: redis
+    filepath: /var/log/redis/*.log
+    user: redis
+    group: redis
+
+  - name: sensu
+    filepath: /var/log/sensu/*.log
+    user: vagrant
+    group: vagrant

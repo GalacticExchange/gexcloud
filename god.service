@@ -1,0 +1,9 @@
+[Unit]
+Description=God: A process monitoring framework in Ruby
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/ruby -c /disk2/vagrant/god.conf -l /tmp/god.log -D
+
+[Install]
+WantedBy=multi-user.target

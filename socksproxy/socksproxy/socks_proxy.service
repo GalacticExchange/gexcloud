@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenBSD Secure Shell server
+After=network.target auditd.service sshd.service
+
+[Service]
+ExecStart=/usr/bin/ssh -o StrictHostKeyChecking=no -N -D 0.0.0.0:80 -i /vagrant/socksproxy/id_rsa vagrant@localhost
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+Alias=socks_proxy.service

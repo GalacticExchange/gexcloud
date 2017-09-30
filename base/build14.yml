@@ -1,0 +1,19 @@
+---
+- hosts: all
+  sudo : true
+  vars:
+   hostname: "master"
+   ip: "127.0.0.0"
+   node_id: "server_master"
+   rabbitmq_user: "sensu"
+   rabbitmq_password: "PH_GEX_PASSWD1"
+   rabbitmq_host: "51.0.1.5"
+  
+  tasks:
+  
+    - include: common.yml
+     
+             
+                       
+
+    

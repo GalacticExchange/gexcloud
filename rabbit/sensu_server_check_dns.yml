@@ -1,0 +1,24 @@
+---
+# sensu files for check dns
+
+
+# copy to conf.d
+- name: copy plugins to conf.d
+  template: src=../roles/sensu-plugins/templates/config/{{item}}.j2 dest=/etc/sensu/conf.d/{{item}} owner=vagrant group=vagrant mode=0775
+  with_items:
+    - check_dns.json
+
+
+# copy plugins
+- name: copy plugins to conf.d
+  template: src=../roles/sensu-plugins/templates/plugins/{{item}} dest=/etc/sensu/plugins/{{item}} owner=vagrant group=vagrant mode=0775
+  with_items:
+    - check-dns-local.rb
+
+
+# restart
+- name: restart sensu server
+  include: ../roles/sensu-server/tasks/fix_permissions.yml
+
+- name: restart sensu server
+  include: ../roles/sensu-server/tasks/restart.yml

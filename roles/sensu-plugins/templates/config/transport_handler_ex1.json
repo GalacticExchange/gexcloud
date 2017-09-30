@@ -1,0 +1,19 @@
+{
+  "handlers": {
+    "transport": {
+      "type": "transport",
+      "pipe": {
+        "name": "gex.nodes.metrics",
+        "type": "topic",
+        "options": {
+          "durable": true,
+          "passive": true
+        }
+      }
+      
+    }
+  }
+}
+
+
+

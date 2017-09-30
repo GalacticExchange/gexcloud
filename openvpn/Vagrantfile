@@ -1,0 +1,56 @@
+require_relative "../common/vagrant/utils.rb"
+
+
+def provision_openvpn(config, settings, global_settings, name)
+
+
+  puts "Configuring Openvpn"
+
+  configure_standard_box_image(config, global_settings)
+
+  config.vm.define name, primary: false, autostart: false do |m|
+
+    configure_ram m, settings
+
+    set_hosts_entries m, settings, global_settings
+
+
+      m.vm.network "public_network", auto_config: false, :bridge => settings[:PUBLIC_BRIDGE]
+
+      # eth2
+      m.vm.network "public_network", auto_config: false, :bridge => settings[:PRIVATE_BRIDGE]
+
+      provision_same_server m
+
+
+    extra_vars = {
+        machine: name,
+        machine_name: settings[:MACHINE_NAME],
+        ipv6: settings[:IPV6],
+        public_ip: settings[:PUBLIC_IP],
+        public_mask: settings[:PUBLIC_MASK],
+        private_ip: settings[:PRIVATE_IP],
+        private_mask: settings[:PRIVATE_MASK],
+        gateway: settings[:GATEWAY]
+    }
+
+    provision_ansible m, settings, "provision", "playbook.yml", extra_vars
+
+    provision_ansible m, settings, "fixes", "fixes.yml", extra_vars
+
+    puts "Finished config"
+
+
+    if settings[:GATEWAY] != nil
+      puts "Configuring default route \n"
+      set_default_route m, settings
+    end
+
+
+  end
+end
+
+configure_all_boxes "provision_openvpn", OPENVPN_SETTINGS
+
+
+

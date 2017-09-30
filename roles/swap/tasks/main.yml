@@ -1,0 +1,25 @@
+---
+
+# add swap
+  - name: allocate
+    shell: sudo fallocate -l {{size}} {{filename}} | true
+
+  - name: enable
+    shell: sudo chmod 600 {{filename}}
+
+  - name: mkswap
+    shell: sudo mkswap {{filename}} |true
+
+  - name: swapon
+    shell: sudo swapon {{filename}} | true
+
+
+# /etc/fstab
+  - name: fstab
+    lineinfile: >
+      dest=/etc/fstab
+      regexp="^{{filename}}.*"
+      line="{{filename}}   none    swap    sw    0   0"
+      state=present
+
+

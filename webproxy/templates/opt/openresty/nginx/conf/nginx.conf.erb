@@ -1,0 +1,53 @@
+<%# vagrant:vagrant:0775 %>env JWT_SECRET;
+
+user  vagrant;
+worker_processes  1;
+
+#error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    # Lua. set search paths for pure Lua external libraries (';;' is the default path):
+    lua_package_path '/opt/openresty/lualib/resty/core/?.lua;/opt/openresty/lualib/resty/?.lua;/home/vagrant/nginx-jwt/?.lua;/home/vagrant/nginx-jwt/resty/?.lua;;';
+    lua_package_cpath '/opt/openresty/luajit/lib/?.so;;';
+
+
+
+
+    ##
+    # Virtual Host Configs
+    ##
+
+    #include /opt/openresty/nginx/conf.d/*.conf;
+    include /opt/openresty/nginx/sites-enabled/*;
+
+}
+
+

@@ -1,0 +1,7 @@
+# The primary network interface
+auto eth2
+iface eth2 inet static
+      address {{_public_ip}}
+      netmask {{_public_mask}}
+      {% if _gateway is defined %}gateway {{_gateway}} {% endif %}
+

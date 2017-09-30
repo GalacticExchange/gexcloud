@@ -1,0 +1,41 @@
+---
+# install gem
+
+# install gem with RVM
+  - name: copy script file
+    sudo: true
+    sudo_user: '{{user}}'
+    copy: src=scripts/install_god_gem.sh dest=/tmp/install_god_gem.sh owner={{user}} group={{group}} mode=775
+
+  - name: install god gem
+    sudo: true
+    sudo_user: '{{user}}'
+    command: bash /tmp/install_god_gem.sh
+
+
+
+
+# init.d script
+  - name: init.d script
+    template: src=etc_init_d_god.j2 dest=/etc/init.d/god owner={{user}} group={{group}} mode=0775
+
+
+
+# config
+  - name: create /opt/god
+    file: path=/opt/god state=directory
+
+  - template: src=opt_god_file_touched.rb dest=/opt/god/file_touched.rb owner={{user}} group={{group}} mode=0775
+  - template: src=master.conf.j2 dest=/opt/god/master.conf owner={{user}} group={{group}} mode=0775
+
+
+
+# autostart
+  - name: autostart
+    shell: update-rc.d god defaults
+
+  - shell: touch /var/log/god.log
+
+# start
+  - name: start god
+    shell: sudo service god start

@@ -1,0 +1,66 @@
+### set dns server
+# using dnsmasq
+#
+# http://unix.stackexchange.com/questions/128220/how-do-i-set-my-dns-when-resolv-conf-is-being-overwritten
+#
+# input:
+# - server
+
+
+# check
+# list ns servers:
+# dig something.unknown  | grep SERVER
+
+
+  - name: install dnsmasq
+    apt: name=dnsmasq state=present
+
+  - name: install network-manager
+    apt: name=network-manager state=present
+
+
+  - name: autostart dnsmasq
+    shell: sudo update-rc.d dnsmasq defaults
+
+
+   # /etc/resolv.dnsmasq.conf
+  - name: /etc/resolv.dnsmasq.conf
+    template: src=resolv.dnsmasq.conf.j2 dest=/etc/resolv.dnsmasq.conf owner=root group=root
+
+
+
+  #/etc/dnsmasq.conf
+  - name: dnsmasq.conf
+    lineinfile: >
+      dest=/etc/dnsmasq.conf
+      regexp="server=[\d\.]+\s*$"
+      line="server={{server}}"
+      state=present
+
+  - name: dnsmasq.conf 2
+    lineinfile: >
+      dest=/etc/dnsmasq.conf
+      regexp="resolv-file=.*$"
+      line="resolv-file=/etc/resolv.dnsmasq.conf"
+      state=present
+
+
+
+
+#    template: src=templates/dnsmasq.conf.j2 dest=/etc/dnsmasq.conf owner=root group=root
+
+  - name: restart dnsmasq
+    shell: sudo service dnsmasq restart
+
+  - name: restart network-manager
+    shell: sudo service network-manager restart
+
+  - name: restart again
+    shell: >
+      sudo service network-manager restart
+      sudo service dnsmasq restart;
+
+
+
+#### v2
+# from https://github.com/jdauphant/ansible-role-dns/blob/master/tasks/main.yml

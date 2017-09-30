@@ -1,0 +1,9 @@
+---
+  - name: fix permissions
+    shell: chmod +x -R /etc/sensu/plugins;
+      chown -R vagrant:vagrant /opt/sensu;
+      chown -R vagrant:vagrant /etc/sensu;
+      chown -R vagrant:vagrant /var/log/sensu;
+      chown -R vagrant:vagrant /var/run/sensu;
+
+

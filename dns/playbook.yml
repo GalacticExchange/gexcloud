@@ -1,0 +1,240 @@
+---
+- hosts: all
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+
+  gather_facts: no
+  tasks:
+    - set_fact:
+        vars_file: "{{machine}}.yml"
+
+
+- hosts: all
+#hosts: "{{ (host == 'devdns') | ternary('dev','main') }}"
+  sudo: true
+  vars_files:
+    - vars/{{vars_file}}
+    - ../vars_common/{{machine}}.yml
+
+
+  tasks:
+
+# base
+    - hostname: name={{hostname}}
+
+# allow/deny
+    - name: hosts allow/deny
+      include: ../roles/hosts/tasks/main.yml
+
+
+
+
+
+# /etc/hosts
+    - name: edit /etc/hosts
+      include: ../roles/dns/tasks/add_hosts.yml
+
+
+### swap
+    - vars:
+        size: "2G"
+        filename: "/swapfile"
+      include: ../roles/swap/tasks/main.yml
+      ignore_errors: True
+
+
+
+### system settings
+
+
+    - name: limit file descriptors
+      lineinfile: >
+        dest=/etc/nsswitch.conf
+        regexp=".*ulimit .*"
+        line="ulimit -n 102400"
+        state=present
+
+
+### dirs
+    - file: path=/var/www/apps state=directory mode=0775 owner=vagrant group=vagrant
+    - file: path=/var/www/logs state=directory mode=0775 owner=vagrant group=vagrant
+
+
+### ssh key for vagrant
+    - set_fact:
+        user: "vagrant"
+
+    - name: ssh key for vagrant
+      include: add_ssh_key.yml
+
+    - name: accept git key to root
+      shell: /usr/bin/ssh-keyscan -p {{git_port}} {{git_host}}  >> /root/.ssh/known_hosts
+      when: git_host is defined
+
+
+    - name: accept git key
+      shell: sudo -u vagrant /bin/bash -c "/usr/bin/ssh-keyscan -p {{git_port}} {{git_host}}  >> /home/vagrant/.ssh/known_hosts"
+      when: git_host is defined
+
+
+    - name: run standard tasks
+      include: ../roles/standard/tasks/standard.yml
+
+
+### ruby
+    - name: install ruby for sudo
+      include: ../roles/ruby/tasks/install_global_2_1_7.yml
+
+
+### gems
+    - name: install gems
+      shell: gem install {{item}}
+      with_items:
+        - process-daemon
+        - nokogiri
+        - http
+        - pidfile
+        - redis
+        - httparty
+
+# gems for rubydns
+    # celluloid
+    - shell: >
+        cd /var/www/apps;
+        sudo gem install celluloid -v 0.17.3;
+        sudo gem install celluloid-io -v 0.17.3
+
+    # celluloid-dns from https://github.com/maxivak/celluloid-dns
+    - shell: >
+        cd /var/www/apps;
+        git clone https://github.com/maxivak/celluloid-dns;
+        cd celluloid-dns;
+        sudo gem build celluloid-dns.gemspec;
+        sudo gem install celluloid-dns-0.17.0.gem;
+
+
+    # rubydns from https://github.com/maxivak/rubydns
+    - shell: >
+        cd /var/www/apps;
+        git clone https://github.com/maxivak/rubydns;
+        cd rubydns;
+        sudo gem build rubydns.gemspec;
+        sudo gem install rubydns-2.0.0.gem;
+
+
+
+### dns utils
+    - name: install dnsutils
+      apt: pkg=dnsutils state=latest
+
+
+
+### network-manager
+    - name: install network-manager
+      apt: pkg=network-manager state=latest
+
+
+### do not use dnsmasq
+    - name: edit dnsmasq config
+      copy: src=files/dnsmasq/network_manager.conf dest=/etc/NetworkManager/NetworkManager.conf
+
+    - name: uninstall dnsmasq-base
+      shell: sudo apt-get remove -y dnsmasq-base
+
+    - name: restart network-manager
+      shell: sudo service network-manager restart
+
+
+
+- hosts: all
+  sudo: false
+  vars_files:
+    - vars/{{vars_file}}
+    - ../vars_common/{{machine}}.yml
+
+
+  tasks:
+
+### ruby app
+    - name: clone app
+      shell:
+        cd /var/www/apps/;
+        rm -rf dns;
+        git clone  {{git_app}} dns;
+        chown vagrant:vagrant -R dns;
+
+    - file: path=/var/www/apps/dns state=directory mode=0775 owner=vagrant group=vagrant
+    - file: path=/var/www/apps/dns/run state=directory mode=0775 owner=vagrant group=vagrant
+    - file: path=/var/www/apps/dns/tmp/pids state=directory mode=0775 owner=vagrant group=vagrant
+    - file: path=/var/www/apps/dns/log state=directory mode=0775 owner=vagrant group=vagrant
+
+
+
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{vars_file}}
+    - ../vars_common/{{machine}}.yml
+
+  tasks:
+
+### god
+    - name: install god
+      vars:
+        user: vagrant
+        group: vagrant
+        god_log_file: /var/www/logs/god.log
+      include: ../roles/god/tasks/install_god_global.yml
+
+
+    - set_fact:
+        god_log_file: /var/www/logs/god.log
+
+    - name: init.d script
+      template: src=files/god/etc_init_d_god.j2 dest=/etc/init.d/god owner=vagrant group=vagrant mode=0775
+
+    - name: copy god /opt/god/dns_not_work.rb
+      template: src=files/god/dns_not_work.rb dest=/opt/god/dns_not_work.rb owner=vagrant group=vagrant mode=0775
+
+
+    - name: god master.conf
+      template: src=files/god/master.conf.j2 dest=/opt/god/master.conf owner=vagrant group=vagrant mode=0775
+
+    - name: god restart
+      shell: sudo service god stop; sudo service god start
+
+
+- hosts: all
+  sudo: false
+  vars_files:
+    - vars/{{vars_file}}
+    - ../vars_common/{{machine}}.yml
+
+
+  tasks:
+
+# deploy
+    - name: deploy app
+      include: deploy_app.yml
+
+# restart app
+    - name: restart app
+      include: restart_app.yml
+
+
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{vars_file}}
+    - ../vars_common/{{machine}}.yml
+
+
+  tasks:
+
+# sensu-client
+    - name: install sensu-client
+      include: sensu_client_install.yml
+
+    - name: sensu-client plugins
+      include: sensu_check_dns.yml
+

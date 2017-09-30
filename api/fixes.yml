@@ -1,0 +1,17 @@
+---
+- hosts: all
+  sudo : true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+    - set_fact:
+        machine: "{{machine}}"
+
+# base
+    - hostname: name={{hostname}}
+
+
+
+

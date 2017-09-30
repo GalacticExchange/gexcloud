@@ -1,0 +1,27 @@
+[Unit]
+Description=OpenVPN server
+After=network.target
+
+
+
+
+[Service]
+Type=forking
+ExecStartPre=/bin/echo 1 >  /proc/sys/net/ipv4/conf/<%=assert_nnil(@_interface) %>/proxy_arp
+ExecStart=/usr/sbin/openvpn --daemon --config /etc/openvpn/config/client_node.conf
+ExecStartPost=/bin/sleep 3
+ExecStartPost=/sbin/ip route replace 51.128.0.0/16 dev  <%= assert_nnil(@_interface) %> src <%= assert_nnil(@_vpn_client_ip) %>
+ExecStartPost=/sbin/ip route replace 51.0.0.55 dev tun0
+
+#TODO
+ExecStartPost=/sbin/ip route replace 51.0.0.23 dev tun0
+
+ExecReload=/bin/kill -HUP $MAINPID
+WorkingDirectory=/etc/openvpn
+Restart=always
+RestartSec=1
+
+
+
+[Install]
+WantedBy=multi-user.target

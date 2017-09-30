@@ -1,0 +1,24 @@
+---
+- name: app api
+  vars:
+    app_name: "{{ app_api_name }}"
+    app_ip: "{{ api_ip }}"
+    app_domain: "{{ api_domainname }}"
+    app_env: "{{ app_env }}"
+    ruby_user: "{{ ruby_user }}"
+
+  include: ../roles/nginx-app-rails/tasks/main.yml
+
+- name: app website
+  vars:
+    app_name: "{{ app_website_name }}"
+    app_ip: "{{ website_ip }}"
+    app_domain: "{{ website_domainname }}"
+    app_env: "{{ app_env }}"
+    ruby_user: "{{ ruby_user }}"
+
+  include: ../roles/nginx-app-rails/tasks/main.yml
+
+# restart Nginx
+- name: Restart nginx
+  action: service name=nginx state=restarted

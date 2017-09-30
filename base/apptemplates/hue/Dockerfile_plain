@@ -1,0 +1,27 @@
+FROM studioetrange/docker-hue
+
+
+
+
+
+# run command by default
+RUN apt-get update; 
+RUN DEBIAN_FRONTEND=noninteractive  apt-get install -y apt-utils
+RUN DEBIAN_FRONTEND=noninteractive  apt-get install -y vim procps ruby openvpn 
+
+include(Dockerfile.common)
+
+RUN rm -rf /opt/hue/desktop/conf/pseudo-distributed.ini /opt/hue/desktop/core/src/desktop/templates/common_header.mako /opt/hue/desktop/core/src/desktop/views.py            
+
+COPY common_header.mako /opt/hue/desktop/core/src/desktop/templates/common_header.mako
+COPY views.py /opt/hue/desktop/core/src/desktop/views.py        
+COPY auth/opt/hue/desktop/core/src/desktop/templates/login.mako /opt/hue/desktop/core/src/desktop/templates/login.mako
+COPY auth/opt/hue/desktop/core/src/desktop/auth/views.py /opt/hue/desktop/core/src/desktop/auth/views.py
+
+RUN chmod a+rw /opt/hue/desktop/core/src/desktop/templates/common_header.mako
+RUN chmod a+rw  /opt/hue/desktop/core/src/desktop/views.py
+        
+
+RUN rm -rf ${TEMPLATES}/download
+
+#CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf", "-n"]

@@ -1,0 +1,5 @@
+# For Ubuntu Trusty (14), need to prioritize the Cloudera packages over default
+# This should be placed in /etc/apt/preferences.d/cloudera.pref
+Package: *
+Pin: release o=Cloudera, l=Cloudera
+Pin-Priority: 501

@@ -1,0 +1,5 @@
+MAINTAINER GEX
+ENV TEMPLATES /etc/gex/templates/
+COPY . ${TEMPLATES}/
+COPY . ${TEMPLATES}/
+RUN cp -rf ${TEMPLATES}/auth/* /

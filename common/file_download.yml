@@ -1,0 +1,11 @@
+---
+### copy file from server
+# input:
+# - remote_path
+# - local_dir
+
+- hosts: all
+  sudo: yes
+  tasks:
+    - fetch: src={{remote_path}} dest=tmp/ flat=yes
+

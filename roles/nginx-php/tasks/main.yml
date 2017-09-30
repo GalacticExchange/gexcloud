@@ -1,0 +1,19 @@
+---
+# php5-fpm
+  - name: install php5-fpm
+    apt: pkg={{item}} state=installed
+    with_items:
+       - php5
+       - php5-fpm
+       - php5-mysql
+
+
+# php.ini
+# Find the line ‘cgi.fix_pathinfo=1′, uncomment it and change the value 1 to 0.
+# cgi.fix_pathinfo=0
+
+  - name: php.ini
+    template: src=php.ini.j2 dest=/etc/php5/fpm/php.ini owner=uadmin group=dev mode=0775
+
+  - name: restart php-fpm
+    shell: sudo service php5-fpm restart

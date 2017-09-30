@@ -1,0 +1,53 @@
+---
+- hosts: all
+  sudo : true
+  vars:
+   hostname: "master"
+   ip: "127.0.0.0"
+   node_id: "server_master"
+   rabbitmq_user: "sensu"
+   rabbitmq_password: "PH_GEX_PASSWD1"
+   rabbitmq_host: "51.0.1.5"
+   rabbitmq_ip: "51.0.1.5"
+  
+  tasks:
+  
+    - include: common.yml
+    
+    - name: maven
+      shell: >
+        apt-get update &&
+        apt-get install -y maven sshpass m4
+
+    - name: move docker to another location
+      shell: >
+        systemctl stop docker;
+        mkdir -p /disk2/docker &&
+        chmod a+rwx /disk2/docker &&
+        echo 'DOCKER_OPTS="-g /disk2/docker"' >> /etc/default/docker &&
+        systemctl start docker;
+
+
+    
+                   
+     
+    - name: copy docker things to vagrant
+      shell: > 
+        cp  /vagrant/* /home/vagrant || true;
+ 
+                
+    - name: install chefDK
+      shell: >
+       cd /tmp; wget https://packages.chef.io/stable/ubuntu/12.04/chefdk_0.14.25-1_amd64.deb;
+       dpkg -i chefdk_0.14.25-1_amd64.deb;
+       gem install rspec;
+       chef gem install chef-provisioning chef-provisioning-docker docker docker-api;
+       groupadd docker;
+       usermod -aG docker vagrant
+
+
+    - name: install apt-cacher
+      shell: >
+       cd /vagrant/buildtools/apt-cacher &&
+       docker build -t eg_apt_cacher_ng . &&
+       docker run --restart always -d -p 3142:3142 --name test_apt_cacher_ng eg_apt_cacher_ng

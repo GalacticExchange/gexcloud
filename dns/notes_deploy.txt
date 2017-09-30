@@ -1,0 +1,28 @@
+# run ansible
+ansible-playbook --private-key=~/.vagrant.d/insecure_private_key -u vagrant -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory fixes.yml
+
+# deploy app - devlocalserver
+#
+ruby provision.rb dns provision_deploy_app.yml  -i devinventory
+
+# using vagrant:
+#ansible-playbook --private-key=~/.vagrant.d/insecure_private_key -u vagrant -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory provision_deploy_app.yml -e "host=devdns"
+
+
+* deploy app - main
+ruby provision.rb dns provision_deploy_app.yml  -i inventory
+
+# run from the host machine
+ansible-playbook --private-key=~/.vagrant.d/insecure_private_key -u vagrant -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory provision_deploy_app.yml -e "host=dns"
+
+
+### deploy PROD
+# login to beta
+# cd /disk2/vagrant
+# git pull origin master
+
+ruby provision.rb dns provision_deploy_app.yml  -i prodinventory
+
+# check
+dig @51.0.1.20 home.gex
+dig @51.0.1.20 yahoo.com

@@ -1,0 +1,36 @@
+remote <%= node['common'].fetch('openvpn_ip') %> <%= @vpn_server_port %> tcp-client
+
+secret /etc/openvpn/config/secret.key
+
+# Interface type, TUN or TAP.
+dev tun
+
+<% if node['common'].fetch('proxy_ip') != "None"  %>
+socks-proxy <%= node['common'].fetch('proxy_ip') %> 80 /etc/openvpn/config/password
+<% end %>
+
+ifconfig <%= @vpn_client_ip %> <%= @vpn_server_ip %>
+
+route 51.77.0.0 255.255.0.0
+route 51.78.0.0 255.255.0.0
+route 51.0.1.8 255.255.255.255
+
+# Keepalive: send ping every 10 seconds, tunnel down after 120 seconds no response.
+keepalive 10 120
+
+# LZO Compression for the tunnel.
+comp-lzo
+
+user nobody
+group nogroup
+
+# Keep trying indefinitely to resolve the
+# host name of the OpenVPN server.  Very useful
+# on machines which are not permanently connected
+# to the internet such as laptops.
+resolv-retry infinite
+
+comp-lzo
+
+
+

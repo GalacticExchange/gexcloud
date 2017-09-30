@@ -1,0 +1,46 @@
+#
+vagrant_machine: dev
+
+#
+hostname: devdns
+domainname: devdns.gex
+ip: 51.1.10.20
+
+#
+app_env: devlocalserver
+
+
+# rabbit
+rabbitmq_host: devrabbit.gex
+rabbitmq_ip: 51.1.1.19
+rabbitmq_user: sensu
+rabbitmq_password: PH_GEX_PASSWD1
+
+
+#
+git_app: http://dev.gex/gex/dns-server.git
+
+dns_hosts:
+  - name: dev.gex
+    ip: 51.1.1.14
+  - name: devapi.gex
+    ip: 51.1.10.21
+  - name: devrabbit.gex
+    ip: 51.1.1.19
+
+
+#
+app_env: devlocalserver
+
+
+# logrotate
+logrotate_files:
+  - name: gex_api_log
+    filepath: /var/www/apps/dns/log/*.log
+    user: vagrant
+    group: vagrant
+
+  - name: var_www_logs
+    filepath: /var/www/logs/*.log
+    user: root
+    group: root

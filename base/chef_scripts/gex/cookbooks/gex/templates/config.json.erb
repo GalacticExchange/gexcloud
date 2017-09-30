@@ -1,0 +1,8 @@
+{
+  "rabbitmq": {
+    "host": "<%= node['common'].fetch('sensu_rabbitmq_host') %>",
+    "vhost": "/sensu",
+    "user": "<%=node['common'].fetch('sensu_rabbitmq_user')%>",
+    "password": "<%=node['common'].fetch('sensu_rabbitmq_password')%>"
+  }
+}

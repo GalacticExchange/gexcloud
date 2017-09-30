@@ -1,0 +1,195 @@
+---
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+  tasks:
+    - hostname: name={{hostname}}
+
+# swap
+    - name: swap
+      vars:
+        size: "2G"
+        filename: "/swapfile"
+      include: ../roles/swap/tasks/main.yml
+      ignore_errors: yes
+
+# hosts allow/deny
+
+    - name: hosts allow/deny
+      include: ../roles/hosts/tasks/main.yml
+
+
+### ufw
+    - name: remove ufw
+      apt: pkg=ufw state=absent
+
+
+### iptables
+#    - name: remove iptables
+ #     apt: pkg=iptables state=absent
+
+
+
+### redis
+    - name: redis
+      include: ../roles/redis/tasks/main.yml
+
+
+### rabbitmq
+    - name: install rabbitmq
+      include: ../roles/rabbitmq/tasks/main.yml
+
+
+    - name: systemd service for Rabbit
+      copy: src=files/rabbit/rabbitmq-server.service dest=/lib/systemd/system/rabbitmq-server.service owner=root group=root mode=0775
+
+    - name: restart rabbitmq-server
+      shell: >
+        systemctl daemon-reload;
+        service rabbitmq-server restart;
+
+### sensu-server
+    - name: install sensu-server
+      include: ../roles/sensu-server/tasks/main.yml
+
+
+# dirs
+    - name: create dirs
+      file: path={{item}} state=directory mode=0775
+      with_items:
+        - /etc/sensu/plugins
+        - /var/run/sensu
+
+
+
+# system settings
+    - name: copy system config files
+      template: src=files/sensu/{{item.source}} dest={{item.dest}} owner=vagrant group=vagrant mode=0775
+      with_items:
+        - { source: 'etc_default_sensu', dest: '/etc/default/sensu' }
+        - { source: 'etc_default_sensu-server.j2', dest: '/etc/default/sensu-server' }
+        - { source: 'etc_default_sensu-api.j2', dest: '/etc/default/sensu-api' }
+
+
+# config
+    - name: copy config
+      template: src=files/sensu/{{item.source}} dest={{item.dest}} owner=vagrant group=vagrant mode=0775
+      with_items:
+        - { source: 'config.json.j2', dest: '/etc/sensu/config.json' }
+
+
+
+# copy to /etc/sensu/conf.d/*
+    - name: copy conf.d/
+      copy: src=../roles/sensu-plugins/templates/config/{{item}}     dest=/etc/sensu/conf.d/{{item}}    owner=vagrant group=vagrant
+      with_items:
+        - node_checks.json
+        - rabbitmq_handler.json
+        - redis_handler.json
+        - kafka_handler.json
+        - checks_gex_api_events.json
+        - mail_admin_handler.json
+
+
+# checks & handlers
+    - name: copy plugins
+      template: src=../roles/sensu-plugins/templates/plugins/{{item}} dest=/etc/sensu/plugins/{{item}} owner=vagrant group=vagrant mode=0775
+      with_items:
+        - metrics-cpu.rb
+        - metrics-memory.rb
+        - metrics-hdd.rb
+        - metrics-docker-container.rb
+        - metrics-docker-stats.rb
+        - rabbitmq_handler.rb
+        - redis_handler.rb
+        - kafka_handler.rb
+        - mail_admin_handler.rb
+
+
+
+# permissions
+    - name: fix permissions
+      include: ../roles/sensu-server/tasks/fix_permissions.yml
+
+
+# restart sensu-server
+    - name: restart sensu-server
+      include: ../roles/sensu-server/tasks/restart.yml
+
+
+
+
+### Uchiwa
+    - name: install uchiwa
+      include: ../roles/sensu-server/tasks/install_uchiwa.yml
+
+    - name: copy uchiwa.json
+      template: src=files/uchiwa.json.j2  dest=/etc/sensu/uchiwa.json owner=vagrant group=vagrant
+
+    - name: restart the service
+      shell: /etc/init.d/uchiwa restart
+
+
+
+
+### sensu-client
+
+# install sensu-client
+    - name: install sensu-client
+      set_fact:
+        hostname: "{{hostname}}"
+        ip: "{{private_ip}}"
+        sensu_name: "server_rabbit"
+        node_id: "server_rabbit"
+        rabbitmq_user: "sensu"
+        rabbitmq_password: "PH_GEX_PASSWD1"
+
+    - include: ../roles/sensu-client/tasks/main.yml
+
+# sensu config
+    - name: copy config files for sensu
+      template: src=files/sensu/{{item.source}} dest={{item.dest}} owner=vagrant group=vagrant mode=0775
+      with_items:
+        - { source: 'config.json.j2', dest: '/etc/sensu/config.json' }
+        - { source: 'conf.d/client.json.erb', dest: '/etc/sensu/conf.d/client.json' }
+
+
+
+
+# restart
+    - include: ../roles/sensu-client/handlers/sensu_restart.yml
+    - include: ../roles/sensu-server/tasks/fix_permissions.yml
+    - include: ../roles/sensu-server/tasks/restart.yml
+
+
+### dns
+
+    - include_vars: "../roles/dns/defaults/main.yml"
+
+
+
+    - set_fact:
+        dns_nameservers:
+          - "{{dns_server}}"
+          - '8.8.8.8'
+
+        dns_remove_resolvconf: true
+        dns_domain: "localdomain"
+        dns_searchs:
+           - "localdomain"
+        dns_dhclient_rule: "supersede" # can be supersede or prepend
+
+        dns_dhclient_file: "/etc/dhcp/dhclient.conf"
+        dns_forced_in_dhclientconf: true
+
+    - name: change DNS servers
+      include: ../roles/dns/tasks/main.yml
+
+    - name: change DNS servers - hard
+      include: ../roles/dns/tasks/set_dns_resolv.yml
+
+
+    - name: run standard tasks
+      include: ../roles/standard/tasks/standard.yml

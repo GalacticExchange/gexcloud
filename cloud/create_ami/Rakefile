@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+
+ENV['AWS_ACCESS_KEY_ID'] = 'PH_GEX_KEY_ID'
+ENV['AWS_SECRET_KEY'] = 'PH_GEX_ACESS_KEY'
+ENV['PEM_FILE_PATH'] = 'GEXExp.pem'
+
+desc "Create all AMI's parallel"
+task :create_images do
+  require_relative 'main'
+end
+
+
+desc 'Create coordinator ami'
+task :create_coord do
+  require_relative 'coordinator_ami'
+  cluster_coord = CoordinatorAmi.new(
+      aws_access_key: ENV['AWS_ACCESS_KEY_ID'],
+      aws_secret_key: ENV['AWS_SECRET_KEY'],
+      key_path: ENV['PEM_FILE_PATH']
+  )
+  cluster_coord.start
+  cluster_coord.run_install
+  cluster_coord.create_counter
+  cluster_coord.create_amis
+end
+
+desc 'Create node ami [main/prod]'
+task :create_node, :gex_env do |task, args|
+  require_relative 'node_ami'
+  node = NodeAmi.new(
+      aws_access_key: ENV['AWS_ACCESS_KEY_ID'],
+      aws_secret_key: ENV['AWS_SECRET_KEY'],
+      key_path: ENV['PEM_FILE_PATH'],
+      gex_env: args[:gex_env]
+  )
+  node.set_hadoop_type('cdh')
+  node.start
+  node.run_install
+  node.speed_up
+  node.create_amis
+end

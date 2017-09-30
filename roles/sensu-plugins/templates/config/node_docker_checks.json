@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "metrics_cpu": {
+      "handlers": [],
+      "type": "metric",
+      "command": "/etc/sensu/plugins/metrics-cpu.rb",
+      "subscribers": [
+        "client_node"
+      ],
+      "interval": 10
+    },
+    "metrics_memory": {
+      "handlers": [],
+      "type": "metric",
+      "command": "/etc/sensu/plugins/metrics-memory.rb",
+      "subscribers": [
+        "client_node"
+      ],
+      "interval": 10
+    }
+
+  }
+}

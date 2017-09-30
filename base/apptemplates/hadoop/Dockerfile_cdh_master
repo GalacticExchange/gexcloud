@@ -1,0 +1,109 @@
+FROM ubuntu:trusty
+USER root
+RUN echo "root:vagrant" | chpasswd
+
+RUN apt-get update; apt-get install -y curl tar sudo openssh-server openssh-client rsync ruby nano openvpn jq zip unzip \
+  iputils-ping telnet hardlink bashdb software-properties-common apt-transport-https dnsmasq netcat python2.7
+
+# Install Java
+ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+ENV PATH $JAVA_HOME/bin:$PATH
+RUN add-apt-repository ppa:webupd8team/java
+RUN apt-get update
+RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+RUN apt-get install -q -y oracle-java8-installer
+RUN apt-get install -q -y oracle-java8-set-default
+
+# Cloudera repos
+RUN curl http://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/archive.key | apt-key add -
+RUN curl http://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/cloudera.list > /etc/apt/sources.list.d/cloudera.list
+RUN curl http://archive.cloudera.com/cm5/ubuntu/trusty/amd64/cm/archive.key | apt-key add -
+RUN curl http://archive.cloudera.com/cm5/ubuntu/trusty/amd64/cm/cloudera.list > /etc/apt/sources.list.d/cloudera-manager.list
+RUN  wget 'https://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/cloudera.list'  -O /etc/apt/sources.list.d/cloudera.list
+COPY cloudera/cloudera.pref /etc/apt/preferences.d/cloudera.pref
+RUN wget https://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/archive.key -O /tmp/archive.key
+RUN  apt-key add /tmp/archive.key
+# Kudu repos
+RUN add-apt-repository "deb [arch=amd64] http://archive.cloudera.com/kudu/ubuntu/trusty/amd64/kudu trusty-kudu5 contrib"
+# Cassandra repos
+RUN echo "deb http://debian.datastax.com/community stable main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+RUN curl -L https://debian.datastax.com/debian/repo_key | sudo apt-key add -
+# Elasticsearch + Kibana repos
+RUN wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+RUN echo "deb https://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
+RUN echo "deb https://packages.elastic.co/kibana/4.6/debian stable main" | sudo tee -a /etc/apt/sources.list.d/kibana.list
+# Neo4j repos
+RUN wget -O - https://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
+RUN echo 'deb http://debian.neo4j.org/repo stable/' | tee -a /etc/apt/sources.list.d/neo4j.list
+
+#RUN wget http://archive.cloudera.com/kafka/ubuntu/trusty/amd64/kafka/cloudera.list     -O /etc/apt/sources.list.d/kafka.list
+RUN wget -qO - http://packages.confluent.io/deb/3.1/archive.key | sudo apt-key add -
+RUN add-apt-repository "deb [arch=amd64] http://packages.confluent.io/deb/3.1 stable main"
+RUN add-apt-repository ppa:gluster/glusterfs-3.8
+
+
+RUN apt-get update; apt-get install -y --allow-unauthenticated elasticsearch kibana confluent-platform-oss-2.10 \
+ kudu kudu-master neo4j-enterprise=3.2.2
+RUN apt-get install -y hadoop-yarn-resourcemanager hadoop-yarn-nodemanager  hadoop-hdfs-namenode \
+ hadoop-hdfs-datanode hadoop-mapreduce hadoop-mapreduce-historyserver hadoop-yarn-proxyserver \
+ hadoop-client hadoop-httpfs hue hue-plugins
+RUN apt-get install -y hive-hcatalog hive-webhcat hive-webhcat-server hive-jdbc hive hive-server \
+ hive-server2 hive-metastore  impala impala-server impala-state-store impala-catalog impala-shell
+RUN apt-get install -y mysql-server libmysql-java
+RUN apt-get install -y solr solr-mapreduce solr-server sqoop2-server sqoop2-client  \
+ zookeeper-server  spark-core spark-history-server spark-python pig dsc30 ntp glusterfs-server
+
+# JSON support to Hive
+RUN wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/hive-json-serde/hive-json-serde-0.2.jar -P /usr/lib/hive/lib/
+# Neo4j settings
+RUN mkdir -p /var/run/neo4j  && mkdir -p /var/log/neo4j && chmod -R 777 /var/log/neo4j && chmod -R 777 /var/lib/neo4j/
+
+# Spark-master Spark-worker CLOUDERA
+RUN curl -o /tmp/spark-2.0.0-bin-hadoop2.7.tgz http://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz
+RUN tar -zxvf /tmp/spark-2.0.0-bin-hadoop2.7.tgz --directory /usr/lib
+RUN mv /usr/lib/spark-2.0.0-bin-hadoop2.7 /usr/lib/spark
+RUN mkdir -p /etc/spark/conf && rm /tmp/spark-2.0.0-bin-hadoop2.7.tgz
+
+include(Dockerfile.common)
+# passwordless ssh
+RUN rm -f /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+RUN ssh-keygen -q -N "" -t dsa -f /etc/ssh/ssh_host_dsa_key
+RUN ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key
+RUN ssh-keygen -q -N "" -t rsa -f /root/.ssh/id_rsa
+RUN cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
+
+RUN echo "mysqld_safe &" > /tmp/config && \
+   echo "mysqladmin --silent --wait=30 ping || exit 1" >> /tmp/config && \
+   LINE="mysql -u root -e 'UPDATE mysql.user SET Password=PASSWORD(\"vagrant\") WHERE User=\"root\";FLUSH PRIVILEGES;'" && \
+   echo "${LINE}" >> /tmp/config && \
+   bash /tmp/config && \
+   rm -f /tmp/config && \
+   cd /usr/lib/hive/scripts/metastore/upgrade/mysql && \
+   mysql -u root -pvagrant -e "CREATE DATABASE metastore;" && \
+   mysql -u root -pvagrant -e "SOURCE /usr/lib/hive/scripts/metastore/upgrade/mysql/hive-schema-1.1.0.mysql.sql;" metastore && \
+   mysql -u root -pvagrant -e "CREATE USER 'hive'@'localhost' IDENTIFIED BY 'vagrant';" && \
+   mysql -u root -pvagrant -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'hive'@'localhost';" && \
+   mysql -u root -pvagrant -e "GRANT ALL PRIVILEGES ON metastore.* TO 'hive'@'localhost'; FLUSH PRIVILEGES"
+
+COPY etc/hadoop/conf/* /etc/hadoop/conf/
+RUN mkdir -p /data/hdfs/namenode && chown hdfs:hdfs -R /data/hdfs && chmod 777 /data
+RUN sudo -u hdfs hdfs namenode -format -force
+
+RUN service hadoop-hdfs-namenode start && sleep 5 && \
+         sudo -u hdfs hadoop fs -mkdir -p /user/hdfs /tmp/hadoop-yarn/staging/history/done_intermediate \
+         /var/log/hadoop-yarn  /user/root  /user/spark /solr && \
+         sudo -u hdfs hadoop fs -mkdir -p /user/spark/applicationHistory \
+         /user/spark/share/lib  /user/hive/warehouse && \
+    sudo -u hdfs hadoop fs -chown hdfs /user/hdfs && \
+    sudo -u hdfs hadoop fs -chown -R mapred:mapred /tmp/hadoop-yarn/staging && \
+    sudo -u hdfs hadoop fs -chmod -R 1777 /tmp && \
+    sudo -u hdfs hadoop fs -chown yarn:mapred /var/log/hadoop-yarn && \
+    sudo -u hdfs hadoop fs -chown -R spark:spark /user/spark && \
+    sudo -u hdfs hadoop fs -chmod 1777 /user/spark/applicationHistory && \
+    sudo -u hdfs hadoop fs -chown hive:hadoop /user/hive/warehouse && \
+    sudo -u hdfs hadoop fs -chown solr /solr
+
+RUN usermod -G hadoop hive
+
+RUN apt-get -y autoremove && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN hardlink -t -o -p /usr

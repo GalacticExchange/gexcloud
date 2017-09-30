@@ -1,0 +1,2 @@
+/exports/ *(rw,sync,insecure,fsid=0,no_subtree_check,no_root_squash)
+#/exports/temp1 *(rw,sync,insecure,no_subtree_check,no_root_squash)

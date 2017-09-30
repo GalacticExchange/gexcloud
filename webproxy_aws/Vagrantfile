@@ -1,0 +1,56 @@
+require_relative '../common/vagrant/utils.rb'
+
+private_ip_address = '24.0.5.5'
+elastic_ip_address = '54.68.160.191' #TODO elastic ip -> should be created and passed
+
+
+Vagrant.configure('2') do |config|
+  config.vm.box = 'dummy'
+
+  config.vm.provider :aws do |aws, override|
+    aws.access_key_id = 'PH_GEX_KEY_ID'
+    aws.secret_access_key = 'PH_GEX_ACESS_KEY'
+    aws.keypair_name = 'ClusterGX_key'
+    aws.region = 'us-west-2'
+
+    aws.ami = 'ami-e20bda82' #coordinator ami
+
+    aws.elastic_ip = elastic_ip_address
+    aws.private_ip_address = private_ip_address
+
+    aws.subnet_id = 'subnet-e25a6086'
+    aws.security_groups = ['sg-63da701a']
+
+    aws.instance_type = 't2.micro'
+    aws.tags = {'Name' => 'WEB_PROXY_GX'}
+
+    override.ssh.username = 'ubuntu'
+    override.ssh.private_key_path = File.join(File.dirname(__FILE__),'ClusterGX_key.pem')
+  end
+
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbook.yml"
+    ansible.extra_vars = {
+        machine: 'aws',
+        _private_ip6: '???',
+        _private_ip: private_ip_address,
+        _public_ip: elastic_ip_address
+    }
+  end
+
+  config.vm.provision 'shell', inline: 'sudo service nginx restart'
+
+  #config.vm.get_info
+end
+
+
+#fog_dns = Fog::DNS.new(
+#    :provider => 'AWS',
+#    :aws_access_key_id => 'PH_GEX_KEY_ID',
+#    :aws_secret_access_key => 'PH_GEX_ACESS_KEY'
+#)
+
+#fog_dns.change_resource_record_sets('Z3U2OGX1U3H2IY',[{:action => 'CREATE', :name => 'webproxy2.galacticexchange.io',:type => 'A',:ttl => 300, :resource_records => ['54.68.160.191'] }])
+
+#fog_dns.change_resource_record_sets('Z3U2OGX1U3H2IY',[{:action => 'CREATE', :name => '*.webproxy2.galacticexchange.io',:type => 'A',:ttl => 300, :resource_records => ['54.68.160.191'] }])

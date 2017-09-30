@@ -1,0 +1,12 @@
+---
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+
+  tasks:
+    - hostname: name={{hostname}}
+
+
+
+

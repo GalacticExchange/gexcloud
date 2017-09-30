@@ -1,0 +1,4 @@
+---
+
+- sudo_user: "{{ruby_user}}"
+  shell: cd /var/www/ansible; git pull origin master;

@@ -1,0 +1,21 @@
+{
+  "client": {
+    "name": "{{ node_name }}",
+    "address": "{{ node_ip6 }}",
+    "subscriptions": [
+      "client_node"
+    ],
+    "keepalive": {
+      "handlers": ["redis", "rabbitmq"],
+      "thresholds": {
+        "warning": 90,
+        "critical": 120
+      },
+      "refresh": 1800
+    },
+    "props": {
+        "node_id": "{{ node_id }}"
+     }
+
+  }
+}

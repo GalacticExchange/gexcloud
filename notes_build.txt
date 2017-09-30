@@ -1,0 +1,21 @@
+### build master
+
+cd base
+vagrant up build
+
+# login to machine
+vagrant ssh build
+
+sudo ./buildcontainers.sh
+
+exit
+
+#
+/disk2/vagrant/base
+# two containers in /disk2/vagrant/base/docker - *.tar
+
+cd /disk2/vagrant/base
+./create_base.sh
+
+
+

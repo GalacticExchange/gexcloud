@@ -1,0 +1,48 @@
+require_relative "../common/vagrant/utils.rb"
+
+
+
+
+def provision_webproxy(config, settings, global_settings, name)
+
+
+  configure_standard_box_image(config, global_settings)
+
+
+  config.vm.define name, primary: false, autostart: false do |m|
+
+    configure_standard_net_and_ram m, settings, global_settings
+    # enable_gui(m)
+
+
+
+    provision_ansible m, settings, "provision", "playbook.yml", {
+        machine: name,
+        _private_ip6: settings[:PRIVATE_IP6],
+        _private_ip: settings[:PRIVATE_IP],
+        _public_ip: settings[:PUBLIC_IP]
+    }
+
+
+    if name == :prod
+      provision_ansible m, settings, "fixes", "fixes.yml", {
+          machine: name,
+          _private_ip6: settings[:PRIVATE_IP6],
+          _private_ip: settings[:PRIVATE_IP],
+          _public_ip: settings[:PUBLIC_IP]
+      }
+
+    end
+
+    m.vm.provision "set_slave_route", type: "shell", run: "always", inline: "ip route replace 51.128.0.0/16 via "+ OPENVPN_SETTINGS[name.to_sym][:PRIVATE_IP]
+
+    provision_shell m, "restartnginx", "sudo service nginx restart"
+
+
+  end
+
+
+end
+
+
+configure_all_boxes "provision_webproxy", WEBPROXY_SETTINGS

@@ -1,0 +1,23 @@
+---
+# Import DB for the app
+# vars in vars/apps/$app_name.yml
+#
+# input:
+# - db_name
+# - filename - filename with DB dump
+
+- name: import db
+  hosts: all
+  tasks:
+
+###
+
+    - set_fact:
+        filename_dump: "{{filename}}"
+
+
+
+    - copy: src={{filename_dump}} dest=/tmp/{{filename}}
+    - mysql_db: name={{db_name}} state=import target=/tmp/{{filename}}
+
+

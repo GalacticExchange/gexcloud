@@ -1,0 +1,11 @@
+---
+- name: process allowed office ips allow
+  template: src=hosts.allow.j2 dest=/etc/hosts.allow owner=root group=root mode=0644
+
+- name: process allowed office ips deny
+  template: src=hosts.deny.j2 dest=/etc/hosts.deny owner=root group=root mode=0644
+
+- name: restart ssh
+  shell: service ssh restart
+
+

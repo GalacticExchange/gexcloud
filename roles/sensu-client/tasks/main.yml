@@ -1,0 +1,77 @@
+---
+### SENSU client
+
+  - name: pre install sensu
+    shell: >
+      sudo wget -q http://repositories.sensuapp.org/apt/pubkey.gpg -O- | sudo apt-key add -;
+      sudo echo "deb     http://repositories.sensuapp.org/apt sensu main" | sudo tee /etc/apt/sources.list.d/sensu.list;
+      sudo apt-get update;
+
+  - name: install sensu 0.21.0
+    #apt: name=sensu state=present
+    shell: sudo apt-get install --force-yes -y sensu=0.21.0-1
+    
+
+  - name: post install sensu
+    shell: echo "sensu hold" | dpkg --set-selections;
+
+  - name: patch sensu
+    shell: sudo wget https://raw.githubusercontent.com/maxivak/sensu/master/lib/sensu/server/process.rb -O /opt/sensu/embedded/lib/ruby/gems/2.2.0/gems/sensu-0.21.0/lib/sensu/server/process.rb
+
+
+  - name: add user to sensu
+    shell: adduser vagrant sensu;
+
+
+
+# install gems
+  - name: install gems
+    shell: sudo GEM_PATH=/opt/sensu/embedded/lib/ruby/gems/2.2.0 /opt/sensu/embedded/bin/gem install {{item}}
+    with_items:
+       - sensu-plugin
+       - bunny
+       - redis
+       - pony
+       - docker-api
+       - net_http_unix
+       - sys-proctable
+       - faraday
+
+
+
+# sensu config
+  - name: copy config files for sensu
+    template: src={{item.source}} dest={{item.dest}} owner=vagrant group=vagrant mode=0775
+    with_items:
+      - { source: 'etc_default_sensu', dest: '/etc/default/sensu' }
+      - { source: 'etc_default_sensu-client.j2', dest: '/etc/default/sensu-client' }
+      - { source: 'config.json.j2', dest: '/etc/sensu/config.json' }
+      - { source: 'client.json.erb', dest: '/etc/sensu/conf.d/client.json' }
+
+
+
+# dirs
+  - name: dir /etc/sensu/plugins
+    file: path=/etc/sensu/plugins state=directory mode=0775
+
+  - name: dir /var/run/sensu
+    file: path=/var/run/sensu state=directory mode=0775
+
+
+# fix permissions
+  - name: fix permissions
+    shell: chmod +x -R /etc/sensu/plugins;
+      chown -R vagrant:vagrant /opt/sensu;
+      chown -R vagrant:vagrant /etc/sensu;
+      chown -R vagrant:vagrant /var/log/sensu;
+      chown -R vagrant:vagrant /var/run/sensu;
+
+
+#
+  - name: autostart sensu-client
+    shell: sudo update-rc.d sensu-client defaults
+
+# start
+  - include: ../handlers/sensu_restart.yml
+
+

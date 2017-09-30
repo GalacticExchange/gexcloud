@@ -1,0 +1,11 @@
+---
+# plugins
+  - name: copy plugins
+    template: src=plugins/{{item}} dest=/etc/sensu/plugins/{{item}} owner=vagrant group=vagrant mode=0775
+    with_items:
+      - metrics-cpu.rb
+      - metrics-memory.rb
+
+
+
+### !!! restart sensu

@@ -1,0 +1,37 @@
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+<% unless File.exist?('/home/vagrant/bare_metal_docker') %>
+After=network.target docker.socket  openvswitch-switch.service openvswitch-nonetwork.service
+Requires=docker.socket openvswitch-switch.service openvswitch-nonetwork.service 
+<% end %>
+
+<% cmd = '' %>
+
+[Service]
+Type=forking
+<% if File.exist?('/home/vagrant/bare_metal_docker') %>
+<% cmd = '/usr/bin/ssh -i /etc/node/ssh_creds/gex.key  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@172.17.0.1 ' %>
+Restart=on-failure
+RemainAfterExit=yes
+<% else %>
+PIDFile=/tmp/gex_<%= @_app_name %>.pid
+Restart=always
+SuccessExitStatus=137
+<% end %>
+
+TimeoutSec=0
+RestartSec=30
+
+
+<% if @_static_ips == "true" %>
+ExecStart=<%= cmd %>/usr/bin/sudo /usr/local/bin/runslavedocker.bash <%= @_app_name %> <%= @_container_external_ip %>
+<% else %>
+ExecStart=<%= cmd %>/usr/bin/sudo /usr/local/bin/runslavedocker.bash <%= @_app_name %>
+<% end %>
+
+ExecStop=-/home/vagrant/container_stop.bash <%=@_app_name%>
+ExecStopPost=-/usr/bin/docker stop -t 5 <%=@_app_name%>
+
+[Install]
+WantedBy=multi-user.target

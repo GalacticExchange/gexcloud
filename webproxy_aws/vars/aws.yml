@@ -1,0 +1,14 @@
+hostname: webproxy
+#domainname: webproxy.gex
+domainname: webproxy1.galacticexchange.io
+
+jwt_secret: mjuRP5vfjsu6611e99
+
+dns_server: 51.0.1.20
+
+# logrotate
+logrotate_files:
+  - name: nginx
+    filepath: /opt/openresty/nginx/logs/*.log
+    user: vagrant
+    group: vagrant

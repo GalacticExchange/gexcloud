@@ -1,0 +1,22 @@
+
+# Basic provisioning example
+- ec2:
+    key_name: mykey
+    instance_type: t2.micro
+    image: ami-123456
+    wait: yes
+    group: webserver
+    count: 3
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
+
+
+# Update AMI Launch Permissions, making it public
+- ec2_ami:
+    aws_access_key: AKIAJIR6QGWzzzz
+    aws_secret_key: 3e4g6Igyd9zzzncJaY6y9kH4T13zzzz
+    region: xxxxxx
+    image_id: "{{ instance.image_id }}"
+    state: present
+    launch_permissions:
+      group_names: ['all']

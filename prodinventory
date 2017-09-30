@@ -1,0 +1,79 @@
+[local]
+localhost ansible_connection=local
+
+
+[dns]
+51.0.1.20 ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[dns:vars]
+machine=prod
+
+
+
+[files]
+files.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[files:vars]
+vagrant_machine_name=prod
+
+[api]
+api.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[api:vars]
+machine=prod
+
+
+[rabbit]
+rabbit.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[rabbit:vars]
+vagrant_machine_name=prod
+
+
+
+[master]
+master.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[master:vars]
+vagrant_machine_name=prod
+
+
+[openvpn]
+172.82.184.106 ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[openvpn:vars]
+vagrant_machine_name=prod
+
+
+[proxy]
+proxy.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[proxy:vars]
+vagrant_machine_name=prod
+_proxy_public_ip=51.1.1.1
+_proxy_private_ip=51.0.1.15
+
+
+
+[webproxy]
+webproxy.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[webproxy:vars]
+vagrant_machine_name=prod
+_webproxy_host=webproxy.gex
+_redis_host=104.247.194.114
+_redis_prefix=gex
+
+
+[gex_servers:children]
+files
+api
+rabbit
+master
+openvpn
+proxy
+webproxy
+
+
+[gex_servers:vars]
+dns_server=51.1.1.20

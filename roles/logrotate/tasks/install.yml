@@ -1,0 +1,6 @@
+---
+- name: update
+  shell: sudo apt-get update
+
+- name: install logrotate
+  shell: sudo apt-get install logrotate

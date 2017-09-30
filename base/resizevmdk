@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+set -x
+set -u
+
+SIZE_IN_MB=$1
+old_vmdk=$(vboxmanage showvminfo boot2docker-vm --details | grep -E "vmdk|vdi" | grep -oE "/.*(vmdk|vdi)")
+new_vdi_image=$(dirname "$old_vmdk")
+new_vdi=$new_vdi_image/boot2dockernew.vdi
+
+
+vboxmanage clonehd "$old_vmdk" "$new_vdi" --format VDI --variant Standard
+vboxmanage modifyhd "$new_vdi" --resize $SIZE_IN_MB
+
+VBoxManage storageattach boot2docker-vm \
+                         --storagectl "SATA" \
+                         --device 0 \
+                         --port 0 \
+                         --type dvddrive \
+                         --medium "/Users/dennis.leon/.boot2docker/boot2docker.iso"
+
+VBoxManage storageattach boot2docker-vm \
+                         --storagectl "SATA" \
+                         --device 0 \
+                         --port 1 \
+                         --type hdd \
+                         --medium "$new_vdi"
+
+ curl -L -v -ogparted.iso http://downloads.sourceforge.net/gparted/gparted-live-0.22.0-1-i586.iso
+
+VBoxManage storagectl boot2docker-vm --name IDE --add ide --bootable on
+sleep 2
+VBoxManage storageattach "boot2docker-vm" --storagectl IDE --port 0 --device 0 --type dvddrive --medium "gparted.iso"
+
+echo 'resize using gparted: follow https://docs.docker.com/articles/b2d_volume_resize/'

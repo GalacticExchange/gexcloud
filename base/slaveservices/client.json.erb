@@ -1,0 +1,19 @@
+{
+  "client": {
+    "name": "<%=assert_nnil(@_sensu_name) %>",
+    "address": "<%=assert_nnil(@_hostname) %>",
+    "subscriptions": [
+      "client_node"
+    ],
+    "props": {
+      "node_id": "<%=assert_nnil(@_node_id)%>",
+
+        "rabbitmq": {
+          "host": "<%=assert_nnil(@_sensu_rabbitmq_host)%>",
+            "vhost": "/sensu",
+          "user": "<%=assert_nnil(@_sensu_rabbitmq_user)%>",
+          "password": "<%=assert_nnil(@_sensu_rabbitmq_password)%>"
+        }
+    }
+  }
+}

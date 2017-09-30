@@ -1,0 +1,27 @@
+[Unit]
+Description=OpenVPN server
+After=<%= @app_name %>.service
+
+[Service]
+
+ExecStartPre=-/usr/bin/docker exec <%= @app_name %>  bash -c '/bin/echo 1 > /proc/sys/net/ipv4/conf/<%= @app_interface_name %>/proxy_arp'
+ExecStartPost=/bin/sleep 3
+ExecStartPost=/usr/bin/docker exec <%= @app_name %>  /sbin/ip route replace 51.128.0.0/16 dev <%= @app_interface_name %> src <%= @app_vpn_client_ip %>
+ExecStart=/usr/bin/docker exec <%= @app_name %> /usr/sbin/openvpn /etc/openvpn/config/client_<%= @app_name %>.conf
+
+<% if node['aws'] %>
+ExecStartPre=-/usr/bin/docker exec <%= @app_name %> bash -c '/usr/bin/pkill openvpn | true'
+ExecStartPost=/usr/bin/docker exec <%= @app_name %> /sbin/ip route replace 51.0.0.32 dev tun0
+ExecStartPost=/usr/bin/docker exec <%= @app_name %> /sbin/ip route replace 51.0.1.15 dev tun0
+<% end %>
+
+ExecStartPost=-/sbin/ip route replace <%= @app_vpn_client_ip %> dev docker0 scope link
+
+Restart=always
+RestartSec=1
+
+ExecReload=/bin/kill -HUP $MAINPID
+WorkingDirectory=/etc/openvpn
+
+[Install]
+WantedBy=multi-user.target

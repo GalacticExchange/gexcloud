@@ -1,0 +1,93 @@
+---
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+    - hostname: name={{hostname}}
+
+    - name: swap
+      vars:
+        size: "2G"
+        filename: "/swapfile"
+      include: ../roles/swap/tasks/main.yml
+
+    - name: hosts allow/deny
+      include: ../roles/hosts/tasks/main.yml
+
+    - name: run standard tasks
+      include: ../roles/standard/tasks/standard.yml
+
+    - name: add socat
+      apt: pkg=socat state=latest
+      
+    - name: copy public key and service file
+      shell: >
+        cat /vagrant/socksproxy/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys
+#        &&
+#        cp /vagrant/socksproxy/socks_proxy.service /etc/systemd/system
+#        &&
+#        systemctl enable socks_proxy.service  | true &&
+#        service socks_proxy start
+      
+
+# dns
+
+    - include_vars: "../roles/dns/defaults/main.yml"
+
+    - set_fact:
+        dns_nameservers:
+          - '8.8.8.8'
+
+        dns_remove_resolvconf: true
+        dns_domain: "localdomain"
+        dns_searchs:
+           - "localdomain"
+        dns_dhclient_rule: "supersede" # can be supersede or prepend
+
+        dns_dhclient_file: "/etc/dhcp/dhclient.conf"
+        dns_forced_in_dhclientconf: true
+
+    - name: change DNS servers
+      include: ../roles/dns/tasks/main.yml
+
+    - name: change DNS servers - hard
+      include: ../roles/dns/tasks/set_dns_resolv.yml
+
+
+
+### ufw
+    - name: remove ufw
+      apt: pkg=ufw state=absent
+
+    - name: install zookeeper
+      shell: sudo gem  install pry pry-byebug zookeeper
+
+      #
+    - name: create socks_proxy user
+      shell: >
+        useradd -p $(openssl passwd -1 887218924) socks_user
+
+      # https://github.com/weheartwebsites/SOCKS5/wiki/Install-a-SOCKS5-server-(Dante)-on-Debian-Wheezy
+    - name: install Dante
+      shell: >
+        wget -O /usr/src/dante-1.4.1.tar.gz https://www.inet.no/dante/files/dante-1.4.1.tar.gz &&
+        cd /usr/src &&
+        tar xvfz dante-1.4.1.tar.gz &&
+        cd dante-1.4.1 &&
+        ./configure &&
+        make &&
+        make install
+
+    - name: configure Dante
+      shell: >
+        mkdir -p /etc/dante_sockd &&
+        cp /vagrant/socksproxy/sockd.conf /etc/dante_sockd &&
+        cp /vagrant/socksproxy/sockd.service /etc/systemd/system &&
+        systemctl enable sockd.service | true &&
+        service sockd start
+
+
+

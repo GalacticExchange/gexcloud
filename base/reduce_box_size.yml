@@ -1,0 +1,14 @@
+---
+- hosts: all
+  sudo : true
+
+  tasks:
+  
+
+  # Shrink 
+
+
+    - name: reduce box size
+      shell: /vagrant/reduce_box_size.sh
+      ignore_errors: yes
+      when: not hdp_type == 'master'

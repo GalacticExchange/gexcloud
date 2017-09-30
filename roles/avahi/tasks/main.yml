@@ -1,0 +1,19 @@
+---
+### avahi
+  - name: install avahi
+    apt: pkg=avahi-daemon state=latest
+
+  - name: enable ipv4 forwarding
+    lineinfile: >
+      dest=/etc/sysctl.conf regexp=".*ip_forward.*$"
+      line="net.ipv4.ip_forward=1" state=present
+  - name: enable ipv6 forwarding
+    lineinfile: >
+      dest=/etc/sysctl.conf regexp=".*net.ipv6.conf.all.forwarding.*"
+      line="net.ipv6.conf.all.forwarding=1" state=present
+
+  - name: disable simple firewall
+    shell: "ufw disable"
+
+#  - name: install kexec-tools
+#    apt: pkg=avahi-daemon state=latest

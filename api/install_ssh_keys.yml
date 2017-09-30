@@ -1,0 +1,18 @@
+---
+
+### add ssh keys for ruby_user and vagrant user
+
+# ssh keys for ruby_user
+- set_fact:
+  - user: "{{ruby_user}}"
+  - pub_key_path: "files/ssh_keys/{{machine}}/{{ruby_user}}/id_rsa.pub"
+  - private_key_path: "files/ssh_keys/{{machine}}/{{ruby_user}}/id_rsa"
+- include: install_ssh_key.yml
+
+
+# ssh keys for vagrant
+- set_fact:
+  - user: "vagrant"
+  - pub_key_path: "files/ssh_keys/{{machine}}/vagrant/id_rsa.pub"
+  - private_key_path: "files/ssh_keys/{{machine}}/vagrant/id_rsa"
+- include: install_ssh_key.yml

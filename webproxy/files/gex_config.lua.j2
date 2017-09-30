@@ -1,0 +1,12 @@
+local gex_config = {}
+
+function gex_config.get_jwt_token_secret()
+    return "{{jwt_secret}}"
+end
+
+function gex_config.get_domainname()
+    return "{{domainname}}"
+end
+
+return gex_config
+

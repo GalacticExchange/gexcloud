@@ -1,0 +1,16 @@
+---
+- name: remove temp
+  shell: sudo rm /tmp/sensu_*
+  ignore_errors: yes
+
+- name: stop sensu servers
+  shell: >
+    sudo /etc/init.d/sensu-server stop;
+    sudo /etc/init.d/sensu-api stop;
+  ignore_errors: yes
+
+
+- name: start sensu servers
+  shell: >
+    sudo /etc/init.d/sensu-server start &&
+    sudo /etc/init.d/sensu-api start;

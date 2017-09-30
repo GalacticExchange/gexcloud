@@ -1,0 +1,47 @@
+---
+
+### sensu-client
+- name: set vars for sensu
+  set_fact:
+    hostname: "{{hostname}}"
+    ip: "{{sys_ip}}"
+    sensu_name: "server_api"
+    node_id: "server_api"
+
+- include: ../roles/sensu-client/tasks/main.yml
+
+
+
+## config overwrite
+- name: copy config files for sensu
+  template: src=files/sensu/{{item.source}} dest={{item.dest}} owner=vagrant group=vagrant mode=0775
+  with_items:
+    - { source: 'client.json.erb', dest: '/etc/sensu/conf.d/client.json' }
+
+
+
+# SENSU basic checks
+- name: copy plugins
+  template: src=../roles/sensu-plugins/templates/plugins/{{item}} dest=/etc/sensu/plugins/{{item}} owner=vagrant group=vagrant mode=0775
+  with_items:
+    - metrics-cpu.rb
+    - metrics-memory.rb
+
+
+### sensu checks api_events
+
+- name: copy plugin for api
+  template: src=files/sensu/{{item}} dest=/etc/sensu/plugins/{{item}} owner=vagrant group=vagrant mode=0775
+  with_items:
+    - 'check_gex_api_events.rb'
+
+
+
+# SENSU-client fix, start
+
+- name: fix permissions
+  shell: chmod +x -R /etc/sensu/plugins;
+    chown -R vagrant:vagrant /etc/sensu;
+
+- name: restart sensu
+  include: ../roles/sensu-client/handlers/sensu_restart.yml

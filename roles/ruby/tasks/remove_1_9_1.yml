@@ -1,0 +1,4 @@
+---
+# remove old versions
+- name:
+  shell: sudo apt-get -y remove ruby 1.9.1

@@ -1,0 +1,33 @@
+[Unit]
+Description=OpenVPN server
+After=<%=@_container_name%>.service
+
+[Service]
+
+<% if @_aws_main %>
+#ExecStartPre=-/usr/bin/docker exec <%=@_container_name%>  /sbin/ip route replace 51.1.0.1 via 10.175.128.0
+#ExecStartPre=/usr/bin/docker exec <%=@_container_name%> /sbin/ip route replace 51.1.1.21 via 10.175.128.0
+<% end %>
+
+ExecStartPre=-/usr/bin/docker exec <%=@_container_name%>  bash -c '/bin/echo 1 > /proc/sys/net/ipv4/conf/<%=@_container_ifname%>/proxy_arp'
+ExecStartPost=/bin/sleep 3
+ExecStartPost=/usr/bin/docker exec <%=@_container_name%>  /sbin/ip route replace 51.128.0.0/16 dev <%=@_container_ifname%> src <%=@_vpn_client_ip%>
+ExecStart=/usr/bin/docker exec <%=assert_nnil(@_container_name) %> /usr/sbin/openvpn /etc/openvpn/config/client_<%=@_container_name%>.conf
+
+<% if @_aws  %>
+ExecStartPre=-/usr/bin/docker exec <%=@_container_name%> bash -c '/usr/bin/pkill openvpn | true'
+ExecStartPost=/usr/bin/docker exec <%=@_container_name%> /sbin/ip route replace 51.0.0.32 dev tun0
+ExecStartPost=/usr/bin/docker exec <%=@_container_name%> /sbin/ip route replace 51.0.1.15 dev tun0
+<% end %>
+
+ExecStartPost=-/sbin/ip route replace <%=assert_nnil(@_vpn_client_ip)%> dev docker0 scope link
+ExecStartPost=/sbin/ip route replace 51.0.0.62 dev tun0
+
+Restart=always
+RestartSec=1
+
+ExecReload=/bin/kill -HUP $MAINPID
+WorkingDirectory=/etc/openvpn
+
+[Install]
+WantedBy=multi-user.target

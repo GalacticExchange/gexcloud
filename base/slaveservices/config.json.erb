@@ -1,0 +1,8 @@
+{
+    "rabbitmq": {
+        "host": "<%=assert_nnil(@_sensu_rabbitmq_host)%>",
+        "vhost": "/sensu",
+        "user": "<%=assert_nnil(@_sensu_rabbitmq_user)%>",
+        "password": "<%=assert_nnil(@_sensu_rabbitmq_password)%>"
+    }
+}

@@ -1,0 +1,18 @@
+[Unit]
+Description=Advanced key-value store
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/redis-server /etc/redis/redis.conf
+TimeoutStopSec=0
+Restart=always
+RestartSec=5
+User=redis
+Group=redis
+LimitNOFILE=900000
+
+[Install]
+WantedBy=multi-user.target
+
+

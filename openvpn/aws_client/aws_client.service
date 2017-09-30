@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenVPN client
+After=network.target
+
+[Service]
+Type=forking
+Restart=always
+RestartSec=1
+ExecStart=/usr/sbin/openvpn --daemon --config /vagrant/aws_client/aws_client.conf
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

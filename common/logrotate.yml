@@ -1,0 +1,19 @@
+---
+# depends:
+# - logrotate_files - list of {name: .., filepath, ..user: .., group: ..}
+
+- hosts: all
+  sudo: yes
+  tasks:
+
+    - name: install
+      include: ../roles/logrotate/tasks/install.yml
+
+    - set_fact:
+        files: "{{logrotate_files}}"
+
+    - name: config logrotate
+      include: ../roles/logrotate/tasks/configure.yml
+
+
+

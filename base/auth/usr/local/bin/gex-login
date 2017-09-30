@@ -1,0 +1,69 @@
+#!/bin/sh
+
+#
+# aad-login - calls aad-login.js to authenticate to Azure AD
+#   Available under the Apache 2 License
+#
+
+# Early in /etc/pam.d/common-auth, add:
+#   auth sufficient pam_exec.so expose_authtok /usr/local/bin/gex-login
+
+
+
+read password
+
+PASS_LEN=${#password}
+
+echo ${PASS_LEN} > /tmp/PASS_LEN
+
+
+if [ ${PASS_LEN} -eq "1" ]
+then
+password="none"
+fi
+
+echo $password > /tmp/PASSWORD
+
+
+echo /usr/bin/ruby ../../../opt/gexauth/gexauth.rb $PAM_USER $password $(hostname) > /tmp/RUBY_CALL
+
+RESULT=$(/usr/bin/ruby ../../../opt/gexauth/gexauth.rb $PAM_USER $password $(hostname))
+
+
+RETURN=$?
+
+echo ${RETURN} > /tmp/RETURN_CODE
+
+if [ "${RETURN}" -eq "1" ]
+then
+return 1
+fi
+
+if [ "${RETURN}" -eq "2" ]
+then
+
+touch /tmp/returned2
+#GROUP=$(echo  ${RESULT}  | jq  -r '.teamName')
+GROUP=${PAM_USER}
+echo ${GROUP} >  /tmp/GROUP
+
+#UID=$(echo  ${RESULT}  | jq -r '.userID')
+echo ${UID} > /tmp/UID
+
+#LUID=$((UID + 1000))
+
+groupadd $GROUP | true
+
+echo "useradd -m $PAM_USER -g $GROUP  -s /bin/bash" > /tmp/USER_ADD
+
+
+
+getent passwd $PAM_USER || useradd -m $PAM_USER -g $GROUP  -s /bin/bash
+usermod -a -G sudo $PAM_USER
+
+return 1
+fi
+
+touch /tmp/ALLOW
+return 0
+

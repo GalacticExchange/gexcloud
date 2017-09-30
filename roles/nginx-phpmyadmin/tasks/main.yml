@@ -1,0 +1,23 @@
+---
+  - apt: update_cache=yes
+
+  - name: install phpmyadmin
+    apt: name=phpmyadmin state=present
+
+  - name: link phpmyadmin
+    shell: ln -s /usr/share/phpmyadmin/ /var/www/html/phpmyadmin
+
+# phpmyadmin config
+  - name: copy phpmyadmin config
+    copy: src=config.inc.php dest=/var/www/html/phpmyadmin/config.inc.php owner={{ruby_user}} group={{ruby_group}} mode=0775
+
+  - name: setup phpmyadmin create_tables
+    shell: >
+      gunzip /usr/share/doc/phpmyadmin/examples/create_tables.sql.gz;
+      mysql --user=root --password={{mysql_root_password}} mysql < /usr/share/doc/phpmyadmin/examples/create_tables.sql
+    ignore_errors: yes
+
+  - name: restart nginx
+    shell: sudo service nginx restart
+
+

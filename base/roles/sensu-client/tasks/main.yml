@@ -1,0 +1,38 @@
+---
+### SENSU client
+
+ 
+
+# sensu config
+  - name: copy config files for sensu
+    template: src={{item.source}} dest={{item.dest}} owner=vagrant group=vagrant mode=0775
+    with_items:
+      - { source: 'etc_default_sensu', dest: '/etc/default/sensu' }
+      - { source: 'etc_default_sensu-client.j2', dest: '/etc/default/sensu-client' }
+
+
+
+# dirs
+  - name: dir /etc/sensu/plugins
+    file: path=/etc/sensu/plugins state=directory mode=0775
+
+  - name: dir /var/run/sensu
+    file: path=/var/run/sensu state=directory mode=0775
+
+
+# fix permissions
+  - name: fix permissions
+    shell: chmod +x -R /etc/sensu/plugins;
+      chown -R vagrant:vagrant /opt/sensu;
+      chown -R vagrant:vagrant /etc/sensu;
+      chown -R vagrant:vagrant /var/log/sensu;
+      chown -R vagrant:vagrant /var/run/sensu;
+
+
+#
+  - name: autostart sensu-client
+    shell: sudo update-rc.d sensu-client defaults
+
+
+
+

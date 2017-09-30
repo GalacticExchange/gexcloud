@@ -1,0 +1,15 @@
+---
+# uchiwa UI
+  - name: install uchiwa
+    shell: apt-get install -y --force-yes sensu uchiwa
+
+  - name: update uchiwa
+    shell: update-rc.d uchiwa defaults
+
+  - name: copy uchiwa.json
+    template: src=uchiwa.json.j2  dest=/etc/sensu/uchiwa.json owner=vagrant group=vagrant
+
+
+# start uchiwa
+  - name: Start the service
+    shell: /etc/init.d/uchiwa start

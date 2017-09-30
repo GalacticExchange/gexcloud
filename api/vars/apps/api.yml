@@ -1,0 +1,9 @@
+app_env: production
+
+domain: "api.galacticexchange.io"
+domain_aliases: "hub.galacticexchange.io"
+
+
+db_name: gex
+db_user: gex
+db_pwd: PH_GEX_PASSWD1

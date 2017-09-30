@@ -1,0 +1,67 @@
+---
+  - apt: update_cache=yes
+
+# curl
+  - name: libcurl3
+    apt: pkg={{item}} state=installed
+    with_items:
+      - libcurl3
+      - curl
+
+  - apt: update_cache=yes
+
+
+
+# packages for ruby
+  - name: Install packages for ruby
+    apt: pkg={{item}} state=installed
+    with_items:
+       - g++
+       - libreadline6-dev
+       - zlib1g-dev
+       - libssl-dev
+       - libyaml-dev
+       - libsqlite3-dev
+       - sqlite3
+       - autoconf
+       - libgdbm-dev
+       - libncurses5-dev
+       - automake
+       - libtool
+       - bison
+       - pkg-config
+       - libffi-dev
+
+
+
+
+# ruby for user uadmin
+  - name: copy script file
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    copy: src=install_rvm.sh dest=/tmp/install_rvm.sh owner={{ruby_user}} group={{ruby_group}} mode=775
+
+  - name: install rvm
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    command: bash /tmp/install_rvm.sh
+
+
+  - apt: update_cache=yes
+
+  - name: copy script file
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    copy: src=install_ruby_for_rvm.sh dest=/tmp/install_ruby_for_rvm.sh owner={{ruby_user}} group={{ruby_group}} mode=775
+
+  - name: install ruby for rvm
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    command: bash /tmp/install_ruby_for_rvm.sh
+
+
+
+
+
+
+

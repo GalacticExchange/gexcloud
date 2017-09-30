@@ -1,0 +1,4 @@
+hostname: devfiles
+domainname: devfiles.gex
+
+git_ansible: git@dev.gex:gex/ansible.git

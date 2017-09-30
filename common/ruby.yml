@@ -1,0 +1,17 @@
+---
+
+- hosts: all
+  sudo: yes
+  vars_files:
+    - ../{{server}}/vars/{{vagrant_machine_name}}.yml
+  tasks:
+
+    - include: ../roles/ruby/tasks/main.yml
+
+    # mysql
+    - name: copy script to install mysql gem
+      copy: src=../roles/ruby/files/mysql_gem.sh dest=/tmp/mysql_gem.sh owner={{ruby_user}} group={{ruby_group}} mode=775
+
+    - name: install mysql gem
+      command: bash /tmp/mysql_gem.sh
+

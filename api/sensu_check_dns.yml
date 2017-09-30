@@ -1,0 +1,31 @@
+---
+
+# install gems
+- name: install gems
+  shell: sudo GEM_PATH=/opt/sensu/embedded/lib/ruby/gems/2.2.0 /opt/sensu/embedded/bin/gem install {{item}}
+  with_items:
+     - dnsruby
+
+
+## config overwrite
+- name: copy config files for sensu
+  template: src=files/sensu/{{item.source}} dest={{item.dest}} owner=vagrant group=vagrant mode=0775
+  with_items:
+    - { source: 'client.json.erb', dest: '/etc/sensu/conf.d/client.json' }
+
+
+# plugins
+- name: copy plugins
+  template: src=../roles/sensu-plugins/templates/plugins/{{item}} dest=/etc/sensu/plugins/{{item}} owner=vagrant group=vagrant mode=0775
+  with_items:
+    - check-dns-local.rb
+
+
+# SENSU-client fix, start
+
+- name: fix permissions
+  shell: chmod +x -R /etc/sensu/plugins;
+    chown -R vagrant:vagrant /etc/sensu;
+
+- name: restart sensu
+  include: ../roles/sensu-client/handlers/sensu_restart.yml

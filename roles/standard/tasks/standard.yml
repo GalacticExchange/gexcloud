@@ -1,0 +1,81 @@
+---
+# - api_host
+
+- name: update
+  shell: sudo apt-get update
+
+
+- apt: name=autofs state=present
+
+- file: path=/mount state=directory mode=0775
+
+
+- name: add line to automaster
+  lineinfile: >
+    dest=/etc/auto.master
+    regexp="/mount.*"
+    line="/mount /etc/auto.nfs"
+    state=present
+
+
+- name: add line to auto.nfs
+  lineinfile: >
+    dest=/etc/auto.nfs
+    regexp="ansible.*"
+    line="ansible  {{nfs_ip}}:/disk2/gexcloud-main-data/scripts"
+    create=true
+    state=present
+
+- name: add line to auto.nfs
+  lineinfile: >
+    dest=/etc/auto.nfs
+    regexp="ansible.*"
+    line="ansible {{nfs_ip}}:/disk2/gexcloud-main-data/gexcloud"
+    create=true
+    state=present
+
+
+- name: add line to auto.nfs
+  lineinfile: >
+    dest=/etc/auto.nfs
+    regexp="ansibledata.*"
+    line="ansibledata  {{nfs_ip}}:/disk2/gexcloud-main-data/clusters"
+    create=true
+    state=present
+
+
+- name: add line to sshd conf
+  lineinfile: >
+    dest=/etc/ssh/sshd_config
+    regexp="UseDNS.*"
+    line="UseDNS no"
+    state=present
+
+
+- name: add line to ssh condfig
+  lineinfile: >
+    dest=/etc/ssh/sshd_config
+    regexp="GSSAPIAuthentication.*"
+    line="GSSAPIAuthentication no"
+    state=present
+
+
+- name: add line to sshd conf
+  lineinfile: >
+    dest=/etc/hosts
+    line="{{api_ip}} api.gex api"
+    state=present
+
+
+- name: reload ssh
+  shell: service sshd reload
+
+- name: reload
+  shell: service autofs stop; service autofs start;
+
+
+- name: install system logrotate
+  copy: src=logrotate.conf dest=/etc/logrotate.conf owner=root group=root
+
+  - name: gem
+    copy: gem install slack-notifier

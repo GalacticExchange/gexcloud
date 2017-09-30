@@ -1,0 +1,37 @@
+logoutput: /var/log/sockd.log
+
+internal: eth2   port = 80
+external: eth2
+
+user.privileged:   root
+user.unprivileged: nobody
+socksmethod:       none
+method: username
+
+block {
+        from: 0.0.0.0/0 to: 0.0.0.0/0
+        command: bind connect udpassociate
+        log: error # connect disconnect iooperation
+        user: vagrant
+        method: username
+}
+
+pass {
+        from: 0.0.0.0/0 to: 0.0.0.0/0
+        command: bind connect udpassociate
+        log: error # connect disconnect iooperation
+        method: username
+}
+
+#
+client pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+    log: error
+}
+
+# allow connect from anywhere as long as client was authed previously
+socks pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+    command: connect
+    log: error
+}

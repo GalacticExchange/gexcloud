@@ -1,0 +1,67 @@
+---
+#- hosts: all
+#  gather_facts: no
+#  tasks:
+#    - set_fact:
+#        vars_file: "{{machine}}.yml"
+
+
+- hosts: all
+  sudo: false
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+    - debug: msg="111"
+
+
+### ruby app
+    - name: clone app
+      shell:
+        cd /var/www/apps/;
+        rm -rf dns;
+        git clone  {{git_app}} dns;
+        sudo chown vagrant:vagrant -R dns;
+
+    - file: path=/var/www/apps/dns state=directory mode=0775 owner=vagrant group=vagrant
+    - file: path=/var/www/apps/dns/run state=directory mode=0775 owner=vagrant group=vagrant
+    - file: path=/var/www/apps/dns/tmp/pids state=directory mode=0775 owner=vagrant group=vagrant
+    - file: path=/var/www/apps/dns/log state=directory mode=0775 owner=vagrant group=vagrant
+
+
+
+- hosts: all
+  sudo: false
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+# deploy
+    - name: deploy app
+      include: deploy_app.yml
+
+# restart app
+    - name: restart app
+      include: restart_app.yml
+
+
+
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+# sensu-client
+    - name: install sensu-client
+      include: sensu_client_install.yml
+
+    - name: sensu-client plugins
+      include: sensu_check_dns.yml
+

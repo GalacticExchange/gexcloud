@@ -1,0 +1,65 @@
+desc "Instal overlay specifying the ip address of the peer and the peer number, as well as key"
+task :install, [:type, :number, :key] do |task, args|
+
+  if args[:type] == "main"
+    ip = "46.172.71.53"
+  else
+    ip = "104.247.220.90"
+  end
+
+  sh 'apt-get install -y bridge-utils'
+
+  IO.write "/etc/rc.local", %{#!/bin/sh -e
+brctl addbr overlay
+ifconfig overlay up
+service overlay restart
+ip addr add 51.1.0.#{50 +  args[:number].to_i-1}/9 dev overlay
+exit 0
+}
+
+  sh 'curl https://peervpn.net/files/peervpn-0-044-linux-x86.tar.gz > /tmp/peer.gz'
+  sh 'gunzip /tmp/peer.gz'
+  sh 'cd /tmp; tar -xvf /tmp/peer'
+  sh 'cp /tmp/peervpn-0-044/peervpn /usr/bin | true'
+
+  if args[:number] == "1"
+
+    IO.write "/etc/overlay.conf", %{
+networkname GEXPEERVPN
+psk #{args[:key]}
+enabletunneling yes
+interface peervpn0
+ifconfig4 10.0.2.#{args[:number]}/24
+port 7000
+}
+  else
+    IO.write "/etc/overlay.conf", %{
+networkname GEXPEERVPN
+psk #{args[:key]}
+enabletunneling yes
+interface peervpn0
+ifconfig4 10.0.2.#{args[:number]}/24
+port 7000
+initpeers #{ip} 7000
+}
+  end
+
+
+  IO.write "/etc/systemd/system/overlay.service", %{
+[Unit]
+Description=Overlay server
+After=network.target
+[Service]
+ExecStart=/usr/bin/peervpn /etc/overlay.conf
+ExecStartPost=-/sbin/brctl addif overlay peervpn0
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
+}
+  sh 'sudo systemctl enable overlay'
+
+  sh 'sudo systemctl start overlay'
+  sh 'sudo systemctl restart overlay'
+end

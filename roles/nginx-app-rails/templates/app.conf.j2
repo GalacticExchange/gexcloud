@@ -1,0 +1,27 @@
+server {
+    {% if app_port is defined %}
+    listen {{app_port}};
+    {% else %}
+    listen 80;
+    {% endif %}
+
+  server_name {{app_domain}};
+
+
+  passenger_enabled on;
+  passenger_app_env {{app_env}};
+
+  passenger_start_timeout 300;
+
+  root /var/www/apps/{{app_name}}/current/public;
+
+  if (-f $document_root/system/maintenance.html) {
+      return 503;
+  }
+
+    error_page 503 @maintenance;
+    location @maintenance {
+        rewrite ^(.*)$ /system/maintenance.html break;
+    }
+
+}

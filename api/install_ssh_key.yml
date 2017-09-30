@@ -1,0 +1,42 @@
+---
+
+### add ssh keys for the user
+# copy private and pub keys
+
+# input:
+# - user - username
+# - private_key_path
+# - pub_key_path
+
+- hosts: all
+  #sudo: "{{user}}"
+  sudo: yes
+  tasks:
+
+    ### ssh keys for user
+    - name: create .ssh dir
+      file: path=/home/{{user}}/.ssh state=directory mode=0700 owner={{user}} group={{user}}
+
+    - name: copy id_rsa
+      copy: src={{private_key_path}} dest=/home/{{user}}/.ssh/id_rsa owner={{user}} group={{user}} mode=600
+
+    - name: copy id_rsa.pub
+      copy: src={{pub_key_path}} dest=/home/{{user}}/.ssh/id_rsa.pub owner={{user}} group={{user}} mode=644
+
+
+    - name: touch authorized_keys
+      command: touch /home/{{user}}/.ssh/authorized_keys
+
+
+    - name: add key to authorized_keys
+      lineinfile: dest=/home/{{user}}/.ssh/authorized_keys line="{{ lookup('file', item) }}"
+      with_fileglob:
+        - "{{pub_key_path}}"
+
+
+    #
+    - name: fix authorized_keys permissions
+      shell: >
+        chown {{user}}:{{user}} /home/{{user}}/.ssh/authorized_keys;
+        chmod 600 /home/{{user}}/.ssh/authorized_keys
+

@@ -1,0 +1,31 @@
+---
+- hosts: all
+  sudo: true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+    - name: swap
+      vars:
+        size: "10G"
+        filename: "/swapfile"
+      include: ../roles/swap/tasks/main.yml
+
+    - name: run standard tasks
+      include: ../roles/standard/tasks/standard.yml
+
+
+    - name: install python-pip
+      shell: apt-get install -y python-pip dnsmasq && pip install j2cli
+
+
+    - name: install containers
+      shell: /vagrant/update_containers.rb
+
+
+
+      
+
+

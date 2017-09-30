@@ -1,0 +1,17 @@
+---
+- name: dir /var/www/ansible
+  file: path=/var/www/ansible state=directory mode=0775
+  ignore_errors: yes
+
+- name: git for /var/www/ansible
+  shell: cd /var/www/ansible; git init; git remote add origin {{ansible_git_repo}};
+
+- command: sudo chown {{ruby_user}}:{{ruby_group}} -R /var/www/apps
+- command: sudo chown {{ruby_user}}:{{ruby_group}} -R /var/www/html
+- command: sudo chown {{ruby_user}}:{{ruby_group}} -R /var/www/logs
+- command: sudo chown {{ruby_user}}:{{ruby_group}} -R /var/www/ansible
+
+- command: sudo chmod g+s -R /var/www/apps
+- command: sudo chmod g+s -R /var/www/logs
+- command: sudo chmod g+s -R /var/www/html
+- command: sudo chmod g+s -R /var/www/ansible

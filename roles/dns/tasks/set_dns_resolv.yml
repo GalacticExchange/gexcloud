@@ -1,0 +1,13 @@
+---
+- name: mv resolv
+  shell: >
+    mv /sbin/resolvconf /sbin/resolvconf-;
+    cp -p /bin/true /sbin/resolvconf;
+
+- name: resolv.conf
+  shell:  >
+     rm -rf /etc/resolv.conf && 
+     echo "nameserver  {{dns_server}}" > /etc/resolv.conf &&
+     echo "nameserver  8.8.8.8" >> /etc/resolv.conf &&
+     chattr +i /etc/resolv.conf
+      

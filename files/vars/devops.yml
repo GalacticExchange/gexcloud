@@ -1,0 +1,3 @@
+hostname: devops
+domainname: devops.gex
+git_ansible: git@dev.gex:gex/ansible.git

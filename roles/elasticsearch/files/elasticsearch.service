@@ -1,0 +1,13 @@
+[Unit]
+Description=Elastic Search
+Documentation=https://elastic.co
+After=network.target
+
+[Service]
+Restart=always
+TimeoutStartSec=0
+RestartSec=1
+ExecStart=/home/mmx/temp/elasticsearch-2.0.0/bin/elasticsearch
+ExecStop=/home/mmx/temp/elasticsearch-2.0.0/bin/elasticsearch stop
+[Install]
+WantedBy=multi-user.target

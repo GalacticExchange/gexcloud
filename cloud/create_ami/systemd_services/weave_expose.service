@@ -1,0 +1,12 @@
+[Unit]
+Description=Weave expose managing
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/local/bin/weave expose
+ExecStartPost= #TODO send weave interface ip to server (???)
+
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,224 @@
+---
+- hosts: all
+  sudo : true
+  
+  
+  tasks:
+            
+    - name: check for file
+      stat: path=/home/vagrant/gexstarter
+      register: bare_metal
+
+    - name: check for bare_metal_docker
+      stat: path=/home/vagrant/bare_metal_docker
+      register: bare_metal_docker
+
+
+    #- name: revert interface names
+    #  shell: >
+    #    sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 net.ifnames=0 biosdevname=0\"/" /etc/default/grub &&
+    #    update-grub
+    #  when: not bare_metal.stat.exists
+       
+       
+    - name: check for file
+      stat: path=/usr/bin/ansible
+      register: bare_metal
+
+    - name: check for cloud
+      shell: dmidecode -s bios-version
+      register: bare_metal_cloud
+
+    - name: cloud speed up check
+      stat: path=/home/vagrant/boosted
+      register: cloud_boosted
+
+#        apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E56151BF &&
+#        echo "deb http://repos.mesosphere.com/ubuntu vivid main" | tee /etc/apt/sources.list.d/mesosphere.list &&
+#        apt-get install -y software-properties-common &&
+#        apt-add-repository -y ppa:ansible/ansible &&
+
+    #- name: wait for lock
+    #  shell: cd /vagrant && ./dpkg_lock_wait.sh
+
+    - name: fix lock error
+      shell: sudo dpkg --configure -a #&& sleep 300
+
+    - name: install packages
+      shell: >
+        sudo apt-get update -y &&
+        sudo apt-get install -y jq arping ruby ruby-dev
+#        apt-get -y install mesos marathon &&        
+#        apt-get install -y --force-yes ansible 
+      #when: not cloud_boosted.stat.exists
+       
+    - name: Remove "apparmor" package
+      apt:
+       name: apparmor
+       state: absent
+
+    - name: Remove "apparmor-utils" package
+      apt:
+       name: apparmor-utils
+       state: absent
+
+    #- name: install docker
+    #  shell: docker -v || curl -sSL "https://get.docker.com/" | sh
+    #  ignore_errors: yes
+    #  when: not bare_metal_docker.stat.exists
+
+
+    #- name: verify docker
+    #  shell: curl -sSL https://get.docker.com/gpg | sudo apt-key add -
+    #  ignore_errors: yes
+    #  when: not bare_metal_docker.stat.exists
+
+    - name: add docker repo
+      shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      when: not bare_metal_docker.stat.exists
+
+    - name: update
+      shell: apt-get update
+      when: not bare_metal_docker.stat.exists
+
+    - name: install docker ce
+      shell: apt-get install -y --allow-unauthenticated  docker-ce=17.03.0~ce-0~ubuntu-xenial
+      when: not bare_metal_docker.stat.exists
+
+
+    #- lineinfile:
+    #    destfile: /etc/hosts
+    #    line: '54.230.15.199 dseasb33srnrn.cloudfront.net'
+
+    #- lineinfile:
+    #    destfile: /etc/hosts
+    #    line: '34.224.205.109 registry-1.docker.io'
+
+    #- lineinfile:
+    #    destfile: /etc/hosts
+    #    line: '34.231.174.197 auth.docker.io'
+
+    - name: install packages
+      shell: apt-get install -y  ntp nfs-kernel-server avahi-daemon openvpn bashdb openvswitch-switch bridge-utils python-pip udhcpc
+      #when: not cloud_boosted.stat.exists
+
+      
+    - name: install aws sdk ruby
+      shell: gem install aws-sdk tracer
+      #when: not cloud_boosted.stat.exists
+      
+    #- name: copy docker service file
+    #  copy: src=common/docker.service dest=/lib/systemd/system/docker.service
+    #  #when: not cloud_boosted.stat.exists
+
+    - name: disable resoving
+      shell: >      
+        mv /sbin/resolvconf /sbin/resolvconf- &&
+        cp -p /bin/true /sbin/resolvconf &&
+        rm -rf /etc/resolv.conf &&
+        echo nameserver 8.8.8.8 > /etc/resolv.conf
+      when: not bare_metal_docker.stat.exists
+        
+
+      
+    - name: remove ufw
+      apt: pkg=ufw state=absent
+      #when: not cloud_boosted.stat.exists
+      
+    - name: install Jinja2
+      shell: >
+        pip install Jinja2;
+        pip install j2cli;   
+      #when: not cloud_boosted.stat.exists
+            
+    - name: enable ipv4 forwarding
+      lineinfile: >
+        dest=/etc/sysctl.conf regexp=".*ip_forward.*$"
+        line="net.ipv4.ip_forward=1" state=present
+    - name: enable ipv6 forwarding
+      lineinfile: >
+        dest=/etc/sysctl.conf regexp=".*net.ipv6.conf.all.forwarding.*"
+        line="net.ipv6.conf.all.forwarding=1" state=present  
+
+    - name: hash mismatch fix
+      shell: sudo dpkg --configure -a && sudo rm -r /var/lib/apt/lists/
+
+    - name: pre install sensu 
+      shell: >
+        sudo wget -q http://repositories.sensuapp.org/apt/pubkey.gpg -O- | sudo apt-key add -;
+        sudo echo "deb     http://repositories.sensuapp.org/apt sensu main" | sudo tee /etc/apt/sources.list.d/sensu.list;
+        sudo apt-get update;
+      #when: not cloud_boosted.stat.exists
+
+
+    - name: install sensu 0.21.0
+      #apt: name=sensu state=present
+      shell: sudo apt-get -y install sensu=0.21.0-1
+      #when: not cloud_boosted.stat.exists
+    
+
+    - name: post install sensu
+      shell: echo "sensu hold" | dpkg --set-selections;
+      #when: not cloud_boosted.stat.exists
+
+    - name: patch sensu
+      shell: sudo wget https://raw.githubusercontent.com/maxivak/sensu/master/lib/sensu/server/process.rb -O /opt/sensu/embedded/lib/ruby/gems/2.2.0/gems/sensu-0.21.0/lib/sensu/server/process.rb
+      #when: not cloud_boosted.stat.exists
+
+    - name: add user to sensu
+      shell: adduser vagrant sensu;
+
+    - name: install gems
+      shell: sudo GEM_PATH=/opt/sensu/embedded/lib/ruby/gems/2.2.0 /opt/sensu/embedded/bin/gem install {{item}}
+      with_items:
+         - bundler
+         #- bunny
+         #- redis
+         #- docker-api
+         #- net_http_unix
+         #- sys-proctable
+
+    - name: install and use Gemfile
+      shell: ruby /vagrant/update_scripts/sensu_gemfile.rb
+      when: not bare_metal.stat.exists
+
+    - name: install and use Gemfile (bare metal)
+      shell: ruby /home/vagrant/update_scripts/sensu_gemfile.rb
+      when:  bare_metal.stat.exists
+
+    - name: increase main limit
+      lineinfile: >
+            dest=/etc/sysctl.conf
+            line="fs.file-max = 2097152" state=present
+
+    - name: raise user limits
+      lineinfile: >
+            dest=/etc/security/limits.conf
+            line="{{ item }}" state=present
+      with_items:
+        - "*         hard    nofile      500000"
+        - "*         soft    nofile      500000"
+        - "root      hard    nofile      500000"
+        - "root      soft    nofile      500000"
+        - "*         soft    nproc       500000"
+        - "*         hard    nproc       500000"
+
+    - name: update sysctl
+      shell: sysctl -p
+
+    - name: remove xwindows
+      shell: apt-get purge -y --force-yes libx11.* libqt.*
+      when: not bare_metal.stat.exists
+
+    - name: remove juju
+      shell: apt-get purge -y --force-yes  juju-core
+      
+    - name: autoremove    
+      shell: apt-get autoremove -y --force-yes
+
+
+
+      
+      
+      
+    

@@ -1,0 +1,4 @@
+hostname: devmaster
+domainname: devmaster.gex
+
+dns_server: 51.0.12.20

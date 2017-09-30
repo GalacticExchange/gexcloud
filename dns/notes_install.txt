@@ -1,0 +1,12 @@
+# vagrant up
+
+
+# log rotate
+
+# log rotate - PROD
+
+# login to beta
+cd /disk2/vagrant
+git pull origin master
+
+ruby provision.rb dns common/logrotate.yml  -i prodinventory

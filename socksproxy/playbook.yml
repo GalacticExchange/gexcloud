@@ -1,0 +1,31 @@
+---
+- hosts: all
+  sudo : true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+
+
+    - hostname: name={{hostname}}
+
+    - name: hosts allow/deny
+      include: ../roles/hosts/tasks/main.yml
+
+
+    - name: install vim
+      apt: pkg=vim state=latest
+
+      
+    - name: copy public key and service file
+      shell: >
+        cat /vagrant/socksproxy/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys &&
+        cp /vagrant/socksproxy/socks_proxy.service /etc/systemd/system &&
+        systemctl enable socks_proxy.service  | true &&
+        chmod 500 /vagrant/socksproxy/id_rsa &&
+        service socks_proxy start
+                   
+      
+      

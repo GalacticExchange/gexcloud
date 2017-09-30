@@ -1,0 +1,33 @@
+---
+
+    - set_fact:
+        mainuser: vagrant
+
+    # copy ssh keys for mainuser
+    - name: create .ssh dir
+      file: path=/home/{{mainuser}}/.ssh state=directory mode=0700 owner={{mainuser}} group={{mainuser}}
+
+    - name: copy id_rsa
+      copy: src="files_{{vagrant_machine_name}}/ssh_keys/id_rsa" dest=/home/{{mainuser}}/.ssh/id_rsa owner={{mainuser}} group={{mainuser}} mode=600
+
+    - name: copy id_rsa.pub
+      copy: src="files_{{vagrant_machine_name}}/ssh_keys/id_rsa.pub" dest=/home/{{mainuser}}/.ssh/id_rsa.pub owner={{mainuser}} group={{mainuser}} mode=644
+
+
+    # authorized_keys
+    - name: touch authorized_keys
+      command: touch /home/{{mainuser}}/.ssh/authorized_keys
+
+
+    - name: add key
+      lineinfile: dest=/home/{{mainuser}}/.ssh/authorized_keys line="{{ lookup('file', item) }}"
+      with_fileglob:
+        - files/ssh_keys/{{mainuser}}/*.pub
+
+
+    #
+    - name: fix authorized_keys permissions
+      command: chown {{mainuser}}:{{mainuser}} /home/{{mainuser}}/.ssh/authorized_keys
+    - name: fix authorized_keys permissions
+      command: chmod 600 /home/{{mainuser}}/.ssh/authorized_keys
+

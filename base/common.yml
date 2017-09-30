@@ -1,0 +1,42 @@
+    - name: check for file
+      stat: path=/home/vagrant/gexstarter
+      register: gexstarter
+      
+
+      
+      
+    #- name: copy to vagrant
+    #  shell: >
+    #    cp  /vagrant/* /home/vagrant || true &&
+    #    cp -rf /vagrant/apptemplates /home/vagrant/ &&
+    #    cp -rf /vagrant/auth /home/vagrant/ &&
+    #    cp -rf /vagrant/.dockerignore /home/vagrant/ &&
+    #    cp -rf /vagrant/openvpn /home/vagrant/ &&
+    #    cp -rf /vagrant/ruby_scripts /home/vagrant/ruby_scripts &&
+    #    chmod a+x /home/vagrant/ruby_scripts/*
+    #  when: not file_exists.stat.exists
+
+    - name: install deb package
+      shell: >
+        mkdir -p /etc/node/nodeinfo &&
+        mkdir -p /home/vagrant/ruby_scripts &&
+        cp -rf /vagrant/ruby_scripts/update_gexnode.rb /home/vagrant/ruby_scripts &&
+        chmod a+x /home/vagrant/ruby_scripts/*;
+      when: not gexstarter.stat.exists
+
+
+    #- name: copy to vagrant (base dir exists)
+    #  shell: >
+    #    cp -R /home/vagrant/base/* /home/vagrant/ || true &&
+    #    chmod a+x /home/vagrant/ruby_scripts/*.rb
+    #  when: file_exists.stat.exists
+      
+
+      
+      
+        
+
+
+
+
+    

@@ -1,0 +1,16 @@
+---
+
+### restart sensu
+
+- name: kill sensu processes
+  shell: sudo kill $(ps aux | grep '/etc/sensu/plugins' | awk '{print $2}');
+    sudo kill $(ps aux | grep '/opt/sensu/embedded/bin/ruby' | awk '{print $2}');
+  ignore_errors: yes
+
+
+- name: sensu stop
+  shell: sudo /etc/init.d/sensu-client stop
+  ignore_errors: yes
+
+- name: sensu start
+  shell: sudo /etc/init.d/sensu-client start

@@ -1,0 +1,22 @@
+---
+### input:
+# dns_server
+#
+
+- hosts: all
+  sudo: yes
+  tasks:
+
+
+    - include_vars: "../roles/dns/defaults/main.yml"
+    - include_vars: "../{{server}}/vars/{{vagrant_machine_name}}.yml"
+    #- debug: msg="MY server={{dns_server}}"
+
+    - set_fact:
+        dns_nameservers:
+          - "{{dns_server}}"
+          - '8.8.8.8'
+
+    - name: change DNS servers
+      include: ../roles/dns/tasks/main.yml
+

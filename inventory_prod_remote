@@ -1,0 +1,101 @@
+[local]
+localhost ansible_connection=local
+
+
+[prodfront]
+46.172.71.53 ansible_ssh_user=vagrant ansible_ssh_pass=PH_GEX_PASSWD3 ansible_sudo_pass=PH_GEX_PASSWD3 ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+
+[prodfront:vars]
+mainuser=vagrant
+env=main
+git_server_url=46.172.71.50:5522
+
+
+[prodmaster]
+46.172.71.56 ansible_ssh_user=vagrant ansible_ssh_pass=PH_GEX_PASSWD3 ansible_sudo_pass=PH_GEX_PASSWD3 ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[prodmaster:vars]
+mainuser=vagrant
+env=main
+git_server_url=46.172.71.50:5522
+
+
+
+
+[dns]
+51.0.1.20 ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[dns:vars]
+vagrant_machine_name=prod
+
+
+
+[files]
+files.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[files:vars]
+vagrant_machine_name=prod
+
+
+[api]
+46.172.71.53 ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_sudo_pass=PH_GEX_PASSWD1 ansible_ssh_port=5023 ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[api:vars]
+machine=prod
+
+
+[rabbit]
+rabbit.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[rabbit:vars]
+vagrant_machine_name=prod
+
+
+
+[master]
+master.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[master:vars]
+vagrant_machine_name=prod
+
+
+[openvpn]
+openvpn.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[openvpn:vars]
+vagrant_machine_name=prod
+
+
+[proxy]
+proxy.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[proxy:vars]
+vagrant_machine_name=prod
+_proxy_public_ip=51.1.1.1
+_proxy_private_ip=51.0.1.15
+
+
+
+[webproxy]
+webproxy.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[webproxy:vars]
+vagrant_machine_name=prod
+_webproxy_host=webproxy.gex
+_redis_host=51.0.1.21
+_redis_prefix=gex
+
+
+[gex_servers:children]
+files
+api
+rabbit
+master
+openvpn
+proxy
+webproxy
+
+
+[gex_servers:vars]
+dns_server=51.1.1.20

@@ -1,0 +1,21 @@
+---
+### setup logrotate
+# input:
+# - files - list of
+#     - name - app name
+#     - filepath - path to lo file
+#     - user, group - owner of the file
+
+
+
+- name: edit /etc/logrotate.d/*
+  template: src=logrotate.conf.j2 dest=/etc/logrotate.d/{{item.name}}.conf owner=root group=root
+  with_items: "{{files}}"
+
+- name: rotate now
+  shell: sudo logrotate -vf /etc/logrotate.d/{{item.name}}.conf
+  with_items: "{{files}}"
+
+# status
+#cat /var/lib/logrotate/status
+

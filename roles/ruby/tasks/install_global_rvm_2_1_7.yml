@@ -1,0 +1,41 @@
+---
+#
+# rvm - install to /usr/local/rvm
+
+- shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+- shell: \curl -sSL https://get.rvm.io | sudo bash -s stable
+
+
+#
+#
+- shell: sudo usermod -a -G rvm vagrant
+# sudo adduser vagrant rvm
+
+
+
+- shell: >
+# source /etc/profile
+    export rvmsudo_secure_path=1;
+
+    source /etc/profile.d/rvm.sh;
+
+    rvmsudo rvm install 2.1.7;
+#
+    rvm use 2.1.7;
+    rvm use  2.1.7 --default;
+    rvm --default use  2.1.7;
+
+    rvmsudo rvm alias create default 2.1.7;
+#rvmsudo rvm use  2.1.7 --default
+
+
+# check
+
+## ???
+# sudo ruby -v
+# should be ==> 2.1.7
+
+
+#
+- shell: rvmsudo apt-get -y install ruby-dev
+

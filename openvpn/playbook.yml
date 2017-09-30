@@ -1,0 +1,112 @@
+---
+- hosts: all
+  sudo : true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+  tasks:
+
+
+
+# swap
+    - name: swap
+      vars:
+        size: "2G"
+        filename: "/swapfile"
+      include: ../roles/swap/tasks/main.yml
+      ignore_errors: yes
+
+
+
+###
+
+    - name: hosts allow/deny
+      include: ../roles/hosts/tasks/main.yml
+
+
+    - name: set networking
+      template: src="interfaces/eth1.cfg.j2" dest="/etc/network/interfaces.d/eth1.cfg"
+    - name: set networking
+      template: src="interfaces/eth2.cfg.j2" dest="/etc/network/interfaces.d/eth2.cfg"
+    - name: start interfaced 
+      shell: ifup eth1 && ifup eth2      
+   
+
+    - name: enable net.ipv4_ip_forward   
+      sysctl: name=net.ipv4.ip_forward value=1 state=present reload=yes
+
+
+
+    - name: run standard tasks
+      include: ../roles/standard/tasks/standard.yml
+
+    - name: install openvpn
+      apt: pkg=openvpn state=latest
+
+    - name: install zookeper
+      apt: pkg=zookeeper state=latest
+
+    - name: disable default
+      shell: systemctl disable zookeeperd
+
+    - name: remove ufw
+      apt: pkg=ufw state=absent
+    - name: create dir
+      shell: mkdir /etc/openvpn/config
+    - name: create client dir
+      file: path=/etc/openvpn/client state=directory mode=0755
+    - name: copy client default
+      copy: src=client/DEFAULT dest=/etc/openvpn/client/DEFAULT owner=root group=root mode=755
+
+
+    - name: install avahi
+      apt: pkg=avahi-daemon state=latest
+    - name: enable avahi ipv6
+      lineinfile: >
+        dest=/etc/nsswitch.conf regexp=".*dns.*"
+        line="hosts:          files myhostname mdns_minimal [NOTFOUND=return] dns mdns" state=present
+
+    - name: enable ipv4 forwarding
+      lineinfile: >
+        dest=/etc/sysctl.conf regexp=".*ip_forward.*$"
+        line="net.ipv4.ip_forward=1" state=present
+    - name: enable ipv6 forwarding
+      lineinfile: >
+        dest=/etc/sysctl.conf regexp=".*net.ipv6.conf.all.forwarding.*"
+        line="net.ipv6.conf.all.forwarding=1" state=present
+
+    - name: install kexec-tools
+      apt: pkg=avahi-daemon state=latest
+      
+    - name: Ensures {{project_root}}/conf dir exists
+      file: path=/etc/openvpn/config state=directory  recurse=yes
+
+    - name: install python-pip and dnsmasq
+      shell: apt-get install -y python-pip dnsmasq && pip install j2cli
+
+
+    - name: raise limits
+      include: ../roles/limits/tasks/main.yml
+
+    #- name: aws client openvpn service
+    #  shell: >
+    #    cp /vagrant/aws_client/aws_client.service /etc/systemd/system &&
+    #    systemctl enable aws_client.service | true &&
+    #    service aws_client start
+
+    - name: insall json zookeevagrantper
+      shell: >
+        gem install json zookeeper parallel
+
+
+
+
+
+
+
+
+
+
+
+
+
+     

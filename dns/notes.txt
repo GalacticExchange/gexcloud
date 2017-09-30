@@ -1,0 +1,10 @@
+### check
+sudo lsof -i :53
+
+dig @localhost dev.gex
+dig @localhost api.gex
+dig @localhost -p 5400 api.gex
+dig @localhost 188.199.162.139.in-addr.arpa PTR
+dig @localhost -p 5400 188.199.162.139.in-addr.arpa PTR
+dig @localhost 31.1.0.51.in-addr.arpa PTR
+

@@ -1,0 +1,135 @@
+---
+- hosts: all
+  sudo : true
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+# base
+    - hostname: name={{hostname}}
+
+    - apt: update_cache=yes
+
+    - name: install vim
+      apt: pkg=vim state=latest
+# allow/deny
+
+    - name: hosts allow/deny
+      include: ../roles/hosts/tasks/main.yml
+
+
+### dns
+    - include_vars: "../roles/dns/defaults/main.yml"
+    - set_fact:
+        dns_nameservers:
+          - '8.8.8.8'
+
+
+    - name: change DNS servers - hard
+      include: ../roles/dns/tasks/set_dns_resolv.yml
+
+
+# nfs
+
+
+    - name: nfs-kernel-server
+      apt: pkg=nfs-kernel-server state=latest
+
+    - name: nfs client componentsy
+
+      apt: pkg=nfs-common state=latest
+
+
+    - name: dir /var/nfs
+      file: path=/var/nfs state=directory mode=0777 owner=vagrant group=nogroup
+
+
+    # config nfs
+    - name: edit /etc/exports
+      lineinfile: >
+        dest=/etc/exports regexp="/var/nfs.*"
+        line="/var/nfs *(rw,all_squash,sync)"
+        state=present
+
+
+    - name: exportfs
+      shell: sudo exportfs -a
+
+    - name: fix permissions for /var/nfs
+
+      shell: sudo chown nobody:nogroup -R /var/nfs
+
+
+    - name: start nfs
+      shell: sudo service nfs-kernel-server start
+
+
+### keys for vagrant
+    - name: copy ssh keys
+      copy: src=files/ssh_keys/id_rsa dest=/home/vagrant/.ssh/id_rsa owner=vagrant group=vagrant mode=700
+
+    - name: copy ssh keys 2
+      copy: src=files/ssh_keys/id_rsa.pub dest=/home/vagrant/.ssh/id_rsa.pub owner=vagrant group=vagrant mode=700
+
+
+### ansible dir
+    - name: dir /var/nfs/ansible
+      file: path=/var/nfs/ansible state=directory mode=0777
+      ignore_errors: yes
+
+
+
+
+
+### git for ansible
+    - name: git for ansible
+      command: chdir=/var/nfs/ansible git init
+
+    - name: fix permissions after git
+      command: sudo chown vagrant:vagrant -R /var/nfs/ansible
+
+    - name: git remote for ansible
+      command: chdir=/var/nfs/ansible git remote add origin {{git_ansible}}
+      ignore_errors: yes
+
+
+### nginx
+    - apt: update_cache=yes
+
+    - name: install  nginx 
+      shell: sudo apt-get install -y nginx
+
+    - name: autostart nginx
+      shell: sudo update-rc.d nginx defaults
+
+    - name: start nginx
+      shell: sudo /etc/init.d/nginx start
+
+
+
+## Docker caching repository
+    #- apt: update_cache=yes
+
+
+    #- name: install docker
+    #  shell: sudo apt-get install -y docker.io
+
+    #- name: copy
+    #  copy: src=docker dest=/etc/default/docker
+
+    #- name: docker caching
+    #  shell: nohup docker run -d -p 5001:5001  --restart=always    -e STANDALONE=false     -e MIRROR_SOURCE=https://registry-1.docker.io     -e MIRROR_SOURCE_INDEX=https://index.docker.io --name cachingregistry  registry
+
+    #- name: docker user
+    #  shell: nohup docker run -d -p 5000:5000  --restart=always  --name registry registry:2
+
+      
+### dirs
+    - name: create dirs in html
+      file: path=/var/www/html/{{item}} state=directory mode=0777
+      with_items:
+        - containers
+        - boxes
+        - applications

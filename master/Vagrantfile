@@ -1,0 +1,157 @@
+require_relative "../common/vagrant/utils.rb"
+ENV['VAGRANT_DEFAULT_PROVIDER']="virtualbox"
+PRIVATE_IP = "51.0.1.31"
+PRIVATE_MASK = "255.128.0.0"
+PRIVATE_IP6 = "FD9E:9E:9E:0:0:1:1F:0/48"
+OPENVPN_PRIVATE_IP = "51.0.1.8"
+OPENVPN_IP6 = "fd9e:9e:9e::1:8:0/64"
+MACHINE_NAME = "master"
+SENSU_NODE_ID = "server_master"
+SENSU_NAME = "server_master"
+SENSU_RMQUSER = "sensu"
+SENSU_RMQPWD = "PH_GEX_PASSWD1"
+SENSU_RMQHOST = "51.0.1.5"
+NAME_SERVER = "51.0.12.21"
+GATEWAY = "51.1.1.100"
+PRIVATE_BRIDGE = "eth0"
+
+
+PRIVATE_IP_DEV = "51.0.1.32"
+PRIVATE_IP6_DEV = "FD9E:9E:9E:0:0:1:20:0/48"
+OPENVPN_PRIVATE_IP_DEV = "51.0.1.9"
+OPENVPN_IP6_DEV = "fd9e:9e:9e::1:8:0/64"
+PRIVATE_MASK_DEV = "255.128.0.0"
+MACHINE_NAME_DEV = "devmaster"
+SENSU_NODE_ID_DEV = "server_master"
+SENSU_NAME_DEV = "server_master"
+SENSU_RMQUSER_DEV = "sensu"
+SENSU_RMQPWD_DEV = "PH_GEX_PASSWD1"
+SENSU_RMQHOST_DEV = "51.0.1.19"
+NAME_SERVER_DEV = "51.0.12.21"
+GATEWAY_DEV = "51.1.1.100"
+PRIVATE_BRIDGE_DEV="eth0"
+
+
+PRIVATE_IP_PROD = "51.0.1.31"
+PRIVATE_MASK_PROD = "255.128.0.0"
+PRIVATE_IP6_PROD = "FD9E:9E:9E:0:0:1:1F:0/48"
+OPENVPN_PRIVATE_IP_PROD = "51.0.1.8"
+OPENVPN_IP6_PROD = "fd9e:9e:9e::1:8:0/64"
+MACHINE_NAME_PROD = "master"
+SENSU_NODE_ID_PROD = "server_master"
+SENSU_NAME_PROD = "server_master"
+SENSU_RMQUSER_PROD = "sensu"
+SENSU_RMQPWD_PROD = "PH_GEX_PASSWD1"
+SENSU_RMQHOST_PROD = "51.0.1.5"
+NAME_SERVER_PROD = "51.0.1.20"
+PRIVATE_BRIDGE_PROD="overlay"
+
+ARGS = MACHINE_NAME + " " + PRIVATE_IP + " " +
+    SENSU_NODE_ID + " " + SENSU_RMQUSER + " " + SENSU_RMQPWD + " " + SENSU_RMQHOST + " " + NAME_SERVER + " " + SENSU_NAME
+
+ARGS_DEV = MACHINE_NAME_DEV + " " + PRIVATE_IP_DEV + " " +
+    SENSU_NODE_ID_DEV + " " + SENSU_RMQUSER_DEV + " " + SENSU_RMQPWD_DEV +
+    " " + SENSU_RMQHOST_DEV + " " + NAME_SERVER_DEV + " " + SENSU_NAME_DEV
+
+ARGS_PROD = MACHINE_NAME_PROD + " " + PRIVATE_IP_PROD + " " +
+    SENSU_NODE_ID_PROD + " " + SENSU_RMQUSER_PROD + " " + SENSU_RMQPWD_PROD + " " +
+    SENSU_RMQHOST_PROD + " " + NAME_SERVER_PROD + " " + SENSU_NAME_PROD
+
+
+def provision_master(config, name, is_primary, is_autostart, private_ip, private_mask, private_ip6, open_vpn_private_ip, args, ram_size, gateway, bridge, settings, global_settings)
+
+
+  unless ARGV[0] == name.to_s || ARGV[1] == name.to_s
+    return
+  end
+
+  add_all_to_hosts
+
+  config.vm.box = "gex/base_master"
+  config.vm.define name, primary: is_primary, autostart: is_autostart, :bridge => "eth0" do |master|
+
+
+    master.vm.network "public_network", auto_config: false, :bridge => bridge
+
+
+    master.vm.provision "shell", inline: "cat /vagrant/cluster.hosts >> /etc/hosts"
+
+    set_hosts_entries master, settings, global_settings
+
+    master.vm.provision "shell", run: "always", inline: "ifconfig eth1 #{private_ip}  netmask  #{private_mask}  up;" \
+
+    "ifconfig eth1 add #{private_ip6} up;" \
+    "ifconfig eth1 promisc;" \
+    "ip route add 51.128.0.0/9  via #{open_vpn_private_ip};"
+
+    if gateway != nil
+      master.vm.provision "shell", run: "always", inline: "route add default gw "+ gateway
+      # delete default gw on eth0
+      master.vm.provision "shell", run: "always",
+                          inline: "eval `route -n | awk '{ if ($8 ==\"eth0\" && $2 != \"0.0.0.0\") print \"route del default gw \" $2; }'`"
+    end
+
+
+    puts args
+    master.vm.provision "configure", type: "shell" do |s|
+      s.path = "../base/ruby_scripts/playbook.rb"
+      s.args = args
+    end
+
+    api_ip = API_SETTINGS[name.to_sym][:PRIVATE_IP] ## for nfs mount
+
+    ENV['ANSIBLE_SSH_PIPELINING'] = "1"
+    ENV['ANSIBLE_GATHERING'] = "explicit"
+
+
+    master.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbook.yml"
+      ansible.raw_arguments = ['-e pipelining=True', '-e gather_facts=False']
+      ansible.raw_ssh_args = ['-o ForwardAgent=yes', '-o ControlMaster=auto', '-o ControlPersist=1800s', '-o ControlMaster=auto', '-o StrictHostKeyChecking=no', '-o UserKnownHostsFile=/dev/null']
+      ansible.extra_vars =
+          {api_ip: api_ip,
+           machine: name
+
+          }
+    end
+
+    count = cpu_count
+
+
+    puts "Using cpus:  #{count - 1}"
+
+    config.vm.provider "virtualbox" do |vb|
+      #  vb.gui = true
+      vb.memory = ram_size
+      vb.cpus = count - 1
+      vb.customize ['modifyvm', :id, '--nictype2', 'Am79C973']
+      vb.customize ["modifyvm", :id, "--nicpromisc1", "allow-all"]
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+      vb.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
+    end
+  end
+end
+
+Vagrant.configure(2) do |config|
+
+
+
+  provision_master config, "main", true, true, PRIVATE_IP, PRIVATE_MASK, PRIVATE_IP6,
+                   OPENVPN_PRIVATE_IP, ARGS, "64012", GATEWAY, PRIVATE_BRIDGE, MASTER_SETTINGS[:main], MASTER_SETTINGS[:global_settings]
+  provision_master config, "dev", false, false, PRIVATE_IP_DEV, PRIVATE_MASK_DEV, PRIVATE_IP6_DEV,
+                   OPENVPN_PRIVATE_IP_DEV, ARGS_DEV, "12012", GATEWAY_DEV, PRIVATE_BRIDGE_DEV, MASTER_SETTINGS[:dev], MASTER_SETTINGS[:global_settings]
+  provision_master config, "prod", false, false, PRIVATE_IP_PROD, PRIVATE_MASK_PROD, PRIVATE_IP6_PROD, OPENVPN_PRIVATE_IP_PROD,
+                   ARGS_PROD, "90012", nil, PRIVATE_BRIDGE_PROD, MASTER_SETTINGS[:prod], MASTER_SETTINGS[:global_settings]
+end
+
+
+
+
+
+
+
+
+
+
+
+

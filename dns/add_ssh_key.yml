@@ -1,0 +1,45 @@
+---
+### add ssh key for user
+# input:
+# - user - username
+# - pub_key_path - path to the pub key
+
+# usage:
+# -o "user=uadmin pub_key_path=files/ssh_keys/dev/uadmin/id_rsa.pub
+
+
+- set_fact:
+    pub_key_path: "files/ssh_keys/{{machine}}/{{user}}/id_rsa.pub"
+- set_fact:
+    pub_key: "{{ lookup('file', pub_key_path) }}"
+
+#- debug: msg="cc== {{ pub_key }} "
+
+### ssh keys for ruby_user
+- name: create .ssh dir
+  file: path=/home/{{user}}/.ssh state=directory mode=0777 owner={{user}} group={{user}}
+
+- name: copy id_rsa.pub
+  copy: src=files/ssh_keys/{{machine}}/{{user}}/id_rsa.pub dest=/home/{{user}}/.ssh/id_rsa.pub owner={{user}} group={{user}} mode=644
+
+- name: copy id_rsa
+  copy: src=files/ssh_keys/{{machine}}/{{user}}/id_rsa dest=/home/{{user}}/.ssh/id_rsa owner={{user}} group={{user}} mode=644
+
+- name: touch authorized_keys
+  command: touch /home/{{user}}/.ssh/authorized_keys
+  ignore_errors: yes
+
+
+- name: add key
+  lineinfile: dest=/home/{{user}}/.ssh/authorized_keys line="{{ pub_key }}"
+
+
+- name: fix permissions
+  shell: >
+    chown {{user}}:{{user}} /home/{{user}}/.ssh/authorized_keys &&
+    chown {{user}}:{{user}} /home/{{user}}/.ssh &&
+    chmod 700 /home/{{user}}/.ssh &&
+    chmod 600 /home/{{user}}/.ssh/authorized_keys &&
+    chmod 400 /home/{{user}}/.ssh/id_rsa
+
+

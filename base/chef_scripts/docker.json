@@ -1,0 +1,47 @@
+{
+  "common": {
+    "openvpn_ip": "46.172.71.56",
+    "proxy_ip": "46.172.71.55",
+    "dns_ip": "51.0.1.8",
+    "api_ip": "46.172.71.53",
+    "sensu_rabbitmq_host": "46.172.71.50",
+    "sensu_rabbitmq_user": "sensu_user",
+    "sensu_rabbitmq_password": "sensu_password"
+  },
+  "gex_hostname": "gexnode",
+  "app_only": false,
+  "cluster_id": "21",
+  "cluster_uid": "212121",
+  "node_name": "test_node",
+  "node_id": "123",
+  "node_uid": "123123",
+  "static_ip": false,
+  "host": {
+    "vpn_server_port": "123",
+    "vpn_client_ip": "51.128...",
+    "vpn_server_ip": "51.128..."
+  },
+  "hadoop": {
+    "vpn_server_port": "123",
+    "vpn_client_ip": "51.128...",
+    "vpn_server_ip": "51.128..."
+  },
+  "hue": {
+    "vpn_server_port": "123",
+    "vpn_client_ip": "51.128...",
+    "vpn_server_ip": "51.128..."
+  },
+  "sensu_name": "sensu_name",
+  "master_ip": "51.77...",
+  "master_host": "hadoop-master.gex...",
+  "run_list": [
+    //"recipe[gex_node::docker_test]"
+    "recipe[gex_node::install]"
+  ]
+}
+
+/*
+  node['basic']['proxy_ip']
+*/
+
+

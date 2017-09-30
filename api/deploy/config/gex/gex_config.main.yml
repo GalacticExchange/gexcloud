@@ -1,0 +1,107 @@
+api_host: 'api.gex'
+domain: 'http://api.gex/'
+hub_url: 'http://hub.gex/'
+website_url: 'http://website.gex/'
+doc_url: 'http://doc.website.gex/'
+checks_server_url: 'http://checks.gex/'
+
+
+#
+ruby_user: 'uadmin'
+
+
+#
+server_app_repo: 'http://files.gex'
+dir_clusters_data: "/var/www/data/"
+
+
+# ips, hosts
+dns_ip: 51.1.1.20
+api_ip: 51.1.1.21
+
+# first-level domain for our servers and clusters
+domain_zone: 'gex'
+
+
+
+#
+jwt_secret: 'r7mjurp2vfjsu6611e45'
+
+#
+log_async: 1
+
+#
+email_from: 'betanoreply@galacticexchange.io'
+email_debug_catch_all: 'betauser@galacticexchange.io'
+
+
+ansible_env: 'main'
+storage_files_dir: '/var/www/ansible/'
+
+chef_dir: '/var/www/chef/'
+
+
+#
+redis_host: 'localhost'
+redis_prefix: 'gex'
+
+
+# rabbit
+rabbit_host: 'rabbit.gex'
+rabbit_url: '51.1.1.5'
+rabbit_api_endpoint: 'http://51.1.1.5:15672'
+
+rabbit_host_private: 'rabbit.gex'
+rabbit_url_private: '51.0.1.5'
+rabbit_api_endpoint_private: 'http://51.0.1.5:15672'
+
+rabbit_root_username: 'admin'
+rabbit_root_password: 'PH_GEX_PASSWD1'
+rabbit_prefix: 'gex'
+
+
+# sensu
+rabbit_sensu_username: 'sensu'
+rabbit_sensu_password: 'PH_GEX_PASSWD1'
+rabbit_sensu_vhost: '/sensu'
+rabbit_sensu_prefix: 'gex'
+
+sensu_api_host: '51.1.1.5'
+sensu_api_host_private: '51.0.1.5'
+sensu_api_port: 4567
+sensu_api_user: 'admin'
+sensu_api_password: 'PH_GEX_PASSWD1'
+
+
+# kafka
+counters_kafka_host: '51.1.0.50'
+counters_kafka_prefix: 'gex'
+
+# elasticsearch
+elasticsearch_host: '51.0.1.21'
+elasticsearch_prefix: 'gex.'
+
+# proxy
+sshproxy_host: "proxy.gex"
+
+# webproxy
+webproxy_host: "webproxy.gex"
+
+
+
+
+# openvpn
+openvpn_host: '51.1.0.1'
+#openvpn_ip6: 'FD9E:9E:9E:0:0:1:8:0/64'
+
+# network
+ip_client_base: 'FDE9:E9:E9'
+ip_server_base: 'FD9E:9E:9E'
+
+
+
+# containers
+master_host: 'master.gex'
+
+hadoop_master_ip_prefix: '51.77'
+hue_master_ip_prefix: '51.78'

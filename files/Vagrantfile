@@ -1,0 +1,31 @@
+require_relative "../common/vagrant/utils.rb"
+
+
+
+
+
+def provision_files(config, settings, global_settings, name)
+
+
+
+  configure_standard_box_image(config, global_settings)
+
+  config.vm.define name, primary: false, autostart: false do |m|
+
+    configure_standard_net_and_ram m, settings, global_settings
+    # enable_gui(m)
+    provision_ansible m, settings, "provision", "playbook.yml", { \
+        machine: name,
+        _private_ip: settings[:PRIVATE_IP]
+    }
+
+
+
+
+  end
+end
+
+configure_all_boxes "provision_files", FILES_SETTINGS
+
+
+

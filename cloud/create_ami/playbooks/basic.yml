@@ -1,0 +1,50 @@
+- hosts: localhost
+  gather_facts: no
+
+  tasks:
+
+    - name: create vagrant user
+      shell: >
+        cp -R /home/ubuntu/.ssh/ /etc/skel/ &&
+        sudo adduser --disabled-password --gecos "" vagrant &&
+        sudo /bin/bash -c 'echo "vagrant ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90-cloud-init-users'
+
+    #- name: install docker
+    #  shell: docker -v || curl -sSL "https://get.docker.com/" | sh
+    #  ignore_errors: yes
+
+    #- name: verify docker
+    #  shell: curl -sSL https://get.docker.com/gpg | sudo apt-key add -
+    #  ignore_errors: yes
+
+    - name: add docker repo
+      shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+    - name: update
+      shell: apt-get update
+
+
+    - name: install docker ce
+      shell: apt-get install -y --allow-unauthenticated  docker-ce=17.03.0~ce-0~ubuntu-xenial
+
+    - name: install weave
+      shell: >
+        curl -L git.io/weave -o /usr/local/bin/weave &&
+        chmod a+x /usr/local/bin/weave
+
+    - name: install packages
+      apt: name={{item}} state=latest
+      with_items:
+           - build-essential
+           - zlib1g-dev
+           - libssl-dev
+           - libreadline6-dev
+           - libyaml-dev
+           - ruby
+           - ruby-dev
+           - libarchive-zip-perl
+
+    - name: install gems
+      shell: >
+        gem install rake &&
+        gem install colorize

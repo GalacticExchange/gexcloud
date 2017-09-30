@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+ip route replace default via <%= assert_nnil(@GATEWAY) %>
+
+iface=$(ip route|grep default| awk '{print $5}')
+
+sed -i "s/eth1/${iface}/g"  /etc/dante_sockd/sockd.conf
+sed -i "s/eth2/${iface}/g"  /etc/dante_sockd/sockd.conf
+
+
+sleep 10
+
+/usr/local/sbin/sockd -D -f /etc/dante_sockd/sockd.conf
+
+ip route replace 51.128.0.0/16 via 51.0.1.8

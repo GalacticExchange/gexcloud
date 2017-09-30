@@ -1,0 +1,27 @@
+# deploy app
+
+- hosts: 127.0.0.1
+  connection: local
+  sudo : false
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+    - name: gems
+      shell: >
+        cd deploy && bundle install
+
+
+    - name: deploy copy configs
+      shell: >
+        cd deploy && cap {{app_api_env}} deploy:copy_config_files;
+
+    - name: deploy
+      shell: >
+        cd deploy && cap {{app_api_env}} deploy;
+
+    - name: deploy - copy apps images
+      shell: >
+        cd deploy && cap {{app_api_env}} mydeploy:upload_applications_photos;

@@ -1,0 +1,79 @@
+[local] 
+localhost ansible_connection=local
+
+[dns]
+51.1.10.20 ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[dns:vars]
+machine=dev
+
+
+[files]
+devfiles.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[files:vars]
+vagrant_machine_name=dev
+
+[api]
+devapi.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[api:vars]
+machine=dev
+
+
+[rabbit]
+devrabbit.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[rabbit:vars]
+vagrant_machine_name=dev
+
+
+
+[master]
+devmaster.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[master:vars]
+vagrant_machine_name=dev
+
+
+[openvpn]
+devopenvpn.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[openvpn:vars]
+vagrant_machine_name=dev
+
+
+[proxy]
+devproxy.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[proxy:vars]
+vagrant_machine_name=dev
+_proxy_public_ip=51.1.1.3
+_proxy_private_ip=51.0.1.17
+
+
+[webproxy]
+devwebproxy.gex ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_ssh_common_args='-o ControlMaster=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[webproxy:vars]
+vagrant_machine_name=dev
+_webproxy_host=devwebproxy.gex
+_redis_host=51.0.10.21
+_redis_prefix=gex
+
+
+
+[gex_servers:children]
+files
+api
+rabbit
+master
+openvpn
+proxy
+webproxy
+
+
+[gex_servers:vars]
+dns_server=51.0.1.8
+
+

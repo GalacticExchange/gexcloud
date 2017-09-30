@@ -1,0 +1,145 @@
+require 'net/http'
+require 'uri'
+require_relative '../base/ruby/deploy'
+
+
+def import_container(machine, file_name, image_name)
+  unless File.exist?("../base/docker/" + file_name)
+    return
+  end
+  exists = File.exist?("docker/" + file_name)
+  if exists
+    old_mod_time = File.mtime("docker/" + file_name).to_i
+    puts old_mod_time
+    new_mod_time = File.mtime("../base/docker/" + file_name).to_i
+    puts new_mod_time
+    if new_mod_time < old_mod_time
+      return
+    end
+  end
+  sh "cp -f ../base/docker/#{file_name} docker/#{file_name}"
+  command = "'sudo docker import /vagrant/docker/#{file_name} gex/#{image_name}'"
+  sh "vagrant ssh #{machine} -c #{command}"
+end
+
+desc "Update container images"
+task :update_containers, [:machine_name] do |t, args|
+  m = args[:machine_name]
+
+  import_container m, "hue_plain.tar", :hue_plain
+  import_container m, "hadoop_plain_master.tar", :hadoop_plain
+  import_container m, "hue_cdh.tar", :hue_cdh
+  import_container m, "hadoop_cdh_master.tar", :hadoop_cdh
+end
+
+
+# @return [Object]
+def update_box_from_url(base_url)
+  sh "rm -rf /tmp/masterbox"
+  sh "mkdir /tmp/masterbox"
+  url = base_url + "master-version.txt"
+  version_info = Net::HTTP.get(URI.parse(url))
+  version = get_version_from_file version_info
+  file_name = master_box_name(version)
+  dest_name = "master.box"
+  file_url = base_url + file_name
+  sh 'curl -o /tmp/masterbox/' + dest_name + ' ' + fileURL
+  sh 'vagrant box add --force gex/base_master /tmp/masterbox/master.box'
+end
+
+
+
+desc "Enter test master"
+task :enter_test_cdh do
+  exec("vagrant ssh main -c 'sudo docker exec -ti hadoop-master-111 bash'")
+end
+
+
+desc "Init master"
+task :init_master do
+  sh "sudo apt-get install -y parallel"
+  sh "sudo gem install whenever aws-sdk trace"
+  sh "gem install whenever aws-sdk trace"
+  sh "sudo whenever -w"
+  sh "sudo apt-get update"
+  sh "sudo apt-get install -y autofs"
+  sh "sudo mkdir /mount"
+  sh "sudo chmod 0755 mount"
+  sh "echo '/mount /etc/auto.nfs' >> /etc/auto.master"
+  sh "echo 'ansible  api.gex:/var/www/ansible' >> /etc/auto.nfs"
+  sh "echo 'ansibledata  api.gex:/var/www/ansibledata' >> /etc/auto.nfs"
+  sh "sudo service autofs stop"
+  sh "sudo service autofs start"
+  sh "sudo gem install chef"
+  sh "sudo gem install zookeeper"
+  sh "sudo sysctl -w vm.max_map_count=262144"
+  sh "echo 'vm.max_map_count=262144' >> /etc/sysctl.conf"
+  sh "mkdir /disk2/containers"
+end
+
+
+desc "Stop idle containers"
+task :stop_idle do
+  Dir["/etc/systemd/system/*.disabled"].each do |file|
+    age = Time.now.to_i - File.ctime(file).to_i
+    if age > 3600
+      name = File.basename file, ".disabled"
+      `systemctl stop #{name}.service`
+      hue_name = name.sub! "hadoop", "hue"
+      `systemctl stop #{hue_name}.service`
+    end
+  end
+end
+
+
+desc "Mark idle containers"
+task :mark_idle do
+  Dir["/etc/systemd/system/hadoop-master-*.service"].each do |file|
+    age = Time.now.to_i - File.ctime(file).to_i
+    if age > 300
+      name = File.basename file, ".service"
+      result = `sudo docker exec -ti #{name} grep hadoop /etc/hosts | grep -v master`
+      if result.strip == ""
+        `touch /etc/systemd/system/#{name}.disabled`
+      end
+      puts result
+
+      result2 = `sudo docker exec -ti #{name}  hdfs dfsadmin -report | grep  Live`
+      if result2.strip == ""
+        `touch /etc/systemd/system/#{name}.disabled`
+      end
+      puts result2
+
+      #`systemctl start #{name}.service` unless File.exist?("/etc/systemd/system/#{name}.disabled")
+    end
+  end
+end
+
+
+desc "Start non-idle containers"
+task :start_containers do
+  Dir["/etc/systemd/system/h*-*.service"].each do |file|
+    name = File.basename file, ".service"
+    `systemctl start #{name}.service` unless File.exist?("/etc/systemd/system/#{name}.disabled")
+    hue_name = name.sub! "hadoop", "hue"
+    `systemctl start #{hue_name}.service` unless File.exist?("/etc/systemd/system/#{name}.disabled")
+    sleep 20
+  end
+end
+
+desc "Stop containers"
+task :stop_containers do
+  Dir["/etc/systemd/system/h*-*.service"].each do |file|
+    name = File.basename file, ".service"
+    `systemctl stop #{name}.service`
+    hue_name = name.sub! "hadoop", "hue"
+    `systemctl stop #{hue_name}.service`
+  end
+end
+
+
+
+#task :update_box do
+#shpass -p 'vagrant' scp -o StrictHostKeyChecking=no  /tmp/boxes/master-version.txt vagrant@files.local:/var/www/html/boxes/master-version.txt
+#sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no  /tmp/boxes/master.box vagrant@files.local:/var/www/html/boxes/gex-0.9.1.06_10_2016_1465550067-master.box
+

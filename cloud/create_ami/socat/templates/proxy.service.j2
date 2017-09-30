@@ -1,0 +1,13 @@
+[Unit]
+Description= Socat {{_source_port}} to [{{_destination_host}}]:{{_destination_port}}
+After=syslog.target network.target
+
+[Service]
+ExecStart=/usr/bin/socat -d -d -lmlocal2 TCP4-LISTEN:{{_source_port}},bind={{_proxy_public_ip}},su=nobody,fork,reuseaddr \
+TCP4:{{_destination_host}}:{{_destination_port}},bind={{_proxy_private_ip}}
+Restart=always
+RestartSec=10
+
+
+[Install]
+WantedBy=multi-user.target

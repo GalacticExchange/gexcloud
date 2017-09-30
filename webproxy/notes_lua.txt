@@ -1,0 +1,18 @@
+# install lua stand-alone
+#http://www.lua.org/download.html
+
+sudo apt-get install lua5.1
+
+
+# redis server
+list 0.0.0.0
+
+/etc/redis/redis.conf
+
+bind 0.0.0.0
+
+# redis-cli
+
+sudo apt-get install redis-tools
+
+redis-cli -h devapi.gex  -a PH_GEX_PASSWD1

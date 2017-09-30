@@ -1,0 +1,4 @@
+ruby_user: uadmin
+app_name: gex
+app_domain: gex.gex
+app_env: production

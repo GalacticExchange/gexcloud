@@ -1,0 +1,509 @@
+---
+
+
+### swap
+    - name: swap
+      vars:
+        size: "4G"
+        filename: "/swapfile"
+      include: ../roles/swap/tasks/main.yml
+      ignore_errors: yes
+
+
+
+
+### ufw
+    - name: remove ufw
+      apt: pkg=ufw state=absent
+
+    - apt: update_cache=yes
+
+    #- name: install fish
+    #  apt: pkg=fish state=latest
+
+    - name: install vim
+      apt: pkg=vim state=latest
+
+
+### sshpass
+    - apt: pkg=sshpass state=latest
+
+
+
+### ruby with RVM
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - include: ../roles/ruby/tasks/main.yml
+
+
+
+# mysql lib
+- hosts: all
+  sudo: true
+  tasks:
+    - command: sudo apt-get install libmysqlclient-dev
+
+
+# mysql gem
+- hosts: all
+  sudo: true
+  sudo_user: "{{ruby_user}}"
+  vars_files:
+    - ../vars_common/{{machine}}.yml
+    - vars/{{machine}}.yml
+  tasks:
+    - name: copy script to install mysql gem
+      copy: src=../roles/ruby/files/mysql_gem.sh dest=/tmp/mysql_gem.sh owner={{ruby_user}} group={{ruby_group}} mode=775
+
+    - name: install mysql gem
+      command: bash /tmp/mysql_gem.sh
+
+
+
+
+### passenger with nginx
+
+- hosts: all
+  sudo: yes
+  vars_files:
+    - vars/{{machine}}.yml
+
+  roles:
+     - { role: ../roles/nginx-passenger }
+
+
+
+### nginx config
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - template: src=files/nginx/nginx.conf.j2 dest=/etc/nginx/nginx.conf owner={{ruby_user}} group={{ruby_group}} mode=0775
+
+
+
+###
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - file: path=/var/www/apps state=directory mode=0775 owner={{ruby_user}} group={{ruby_group}}
+    - file: path=/var/www/logs state=directory mode=0775 owner={{ruby_user}} group={{ruby_group}}
+
+
+
+
+### php for nginx
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  roles:
+     - { role: ../roles/nginx-php }
+
+
+
+
+### nginx default server
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - template: src=files/nginx_sites/default.conf.j2 dest=/etc/nginx/sites-available/default.conf owner={{ruby_user}} group={{ruby_group}} mode=0775
+    - shell: ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
+      ignore_errors: yes
+
+    - name: restart nginx
+      shell: sudo service nginx restart
+
+
+
+
+### redis
+
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  roles:
+     - { role: ../roles/redis }
+
+
+# redis config
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - name: copy Redis config file
+      copy: src=files/redis/redis.conf dest=/etc/redis/redis.conf owner=root group=root mode=0775
+    - name: restart redis
+      include: ../roles/redis/tasks/restart.yml
+
+
+### phpmyadmin
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+  roles:
+     - { role: ../roles/nginx-phpmyadmin }
+
+
+
+### phpredisadmin
+
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+  roles:
+    - { role: ../roles/nginx-phpredisadmin }
+
+# config phpredisadmin
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - name: copy config file
+      template: src=files/phpredisadmin/config.inc.php.j2 dest=/var/www/html/phpredisadmin/includes/config.inc.php owner={{ruby_user}} group={{ruby_group}} mode=0775
+
+    - name: fix permissions
+      shell: chown {{ruby_user}}:{{ruby_group}} -R /var/www/html/phpredisadmin
+
+
+    - name: restart nginx
+      shell: service nginx restart
+
+
+
+
+### god
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  vars:
+    god_log_file: /var/www/logs/god.log
+    user: "{{ruby_user}}"
+    group: "{{ruby_group}}"
+    use_rvm: "1"
+  roles:
+     - { role: ../roles/god }
+
+
+### god config
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - name: god master.conf
+      template: src=files/god/master.conf.j2 dest=/opt/god/master.conf owner={{ruby_user}} group={{ruby_group}} mode=0775
+
+    - name: god stop
+      shell: sudo service god stop
+
+    - name: god start
+      shell: sudo service god start
+
+
+
+
+
+### java
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  roles:
+     - { role: ../roles/java }
+
+
+
+### elasticsearch
+- hosts: all
+  sudo: true
+  vars_files:
+    - vars/{{machine}}.yml
+  roles:
+     - { role: ../roles/elasticsearch }
+
+
+# elasticsearch config
+- hosts: all
+  sudo : true
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - template: src=files/elasticsearch/elasticsearch.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml owner=root group=elasticsearch mode=0775
+
+    - name: restart ES
+      shell: sudo systemctl start elasticsearch
+
+#    - name: restart ES
+#      shell: sudo service elasticsearch restart
+
+
+    - name: nfs-common
+      shell: sudo apt-get install nfs-common
+
+
+### NFS for ansible
+#    - name: dir /mnt/nfs/files
+#      file: path=/mnt/nfs/files state=directory mode=0777
+#      ignore_errors: yes
+
+
+#    - name: automount files
+#      lineinfile: >
+#        dest=/etc/fstab
+#        regexp=" /mnt/nfs/files.*"
+#        line="{{files_host}}:/var/nfs    /mnt/nfs/files  nfs auto"
+#        state=present
+
+#    - name: mount now
+#      shell: sudo mount -a
+
+
+### ansible scripts
+    - name: dir /var/www/ansible
+      file: path=/var/www/ansible state=directory mode=0775 owner={{ruby_user}} group={{ruby_group}}
+      ignore_errors: yes
+
+    - name: dir /var/www/data
+      file: path=/var/www/data state=directory mode=0775 owner={{ruby_user}} group={{ruby_group}}
+      ignore_errors: yes
+
+    - name: dir /var/www/data/clusters
+      file: path=/var/www/data/clusters state=directory mode=0775 owner={{ruby_user}} group={{ruby_group}}
+      ignore_errors: yes
+
+    - name: git for /var/www/ansible
+      shell: cd /var/www/ansible; git init; git remote add origin {{ansible_git_repo}};
+
+
+### ansible
+    - include: ../roles/ansible/tasks/install_1_9_4.yml
+
+
+
+# ansible config
+    - name: copy ansible.cfg
+      copy: src=files/ansible/ansible.cfg dest=/etc/ansible/ansible.cfg owner=root group=root mode=775
+
+
+
+### libs
+    - name: install imagemagick
+      apt: pkg=imagemagick state=latest
+
+
+
+
+### apps on nginx
+- hosts: all
+  sudo: yes
+  vars_files:
+    - vars/{{machine}}.yml
+  tasks:
+    - include_vars: vars/{{machine}}.yml
+
+    - name: app api
+      vars:
+        app_name: "{{ app_api_name }}"
+        app_env: "{{ app_api_env }}"
+        app_domain: "{{api_domain}} {{hub_domain}} {{api_ip}}"
+        app_ip: "{{ api_ip }}"
+        app_port: "{{ api_port }}"
+        ruby_user: "{{ ruby_user }}"
+
+      include: ../roles/nginx-app-rails/tasks/main.yml
+
+
+# fix permissions
+    - command: sudo chown {{ruby_user}}:{{ruby_group}} -R {{item}}
+      with_items:
+        - /var/www/apps
+        - /var/www/html
+        - /var/www/logs
+        - /var/www/ansible
+        - /var/www/data
+
+
+    - command: sudo chmod g+s -R {{item}}
+      with_items:
+        - /var/www/apps
+        - /var/www/logs
+        - /var/www/html
+        - /var/www/data
+        - /var/www/ansible
+
+
+
+# restart Nginx
+    - name: Restart nginx
+      action: service name=nginx state=restarted
+
+
+
+## import db
+
+    - name: copy db dump file - 1
+      copy: src=files/db/init_gex.sql.gz dest=/var/www/temp/init_gex.sql.gz owner=root group=root mode=775
+
+    - name: copy db dump file - 2
+      copy: src=files/db/init_gex_logs.sql.gz dest=/var/www/temp/init_gex_logs.sql.gz owner=root group=root mode=775
+
+
+    # this needs to be done to update the DB
+    #START_DB
+
+    - name: import db
+      shell: >
+        cd /var/www/temp/ && rm -f init_gex.sql && gunzip init_gex.sql.gz;
+        mysql -u root -p{{mysql_root_password}} gex < /var/www/temp/init_gex.sql
+
+    # this needs to be done to update the DB
+    #END_DB
+
+
+    - name: import db logs
+      shell: >
+        cd /var/www/temp/ && rm -f init_gex_logs.sql && gunzip init_gex_logs.sql.gz;
+        mysql -u root -p{{mysql_root_password}} gex_logs < /var/www/temp/init_gex_logs.sql
+
+
+
+### nodejs, bower
+    - name: repo for nodejs
+      shell: curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+
+    - name: install nodejs
+      shell: apt-get install -y nodejs
+
+    - name: bower
+      shell: >
+        npm install -g bower;
+        npm install -g bower-npm-resolver;
+
+
+
+### sensu-client
+    - include: sensu_client_install.yml
+
+
+### sensu - check dns
+    - include: sensu_monitoring.yml
+
+### slack client - ansible logs
+    - name: make plugin directory
+      command: sudo mkdir -p /usr/share/ansible_plugins/callback_plugins/
+
+    - name: install slackclient
+      command: sudo pip install slackclient
+
+    - copy: src=slack/slack-logger.py dest=/usr/share/ansible_plugins/callback_plugins/slack-logger.py owner=root group=root mode=775
+
+
+
+
+### chef
+
+    - name: dir /var/www/chef
+      file: path=/var/www/chef state=directory mode=0775
+      ignore_errors: yes
+
+    - command: sudo chown {{ruby_user}}:{{ruby_group}} -R /var/www/chef
+
+    - name: git for /var/www/chef
+      shell: cd /var/www/chef; git init; git remote add origin {{chef_git_repo}};
+
+    - command: sudo chown {{ruby_user}}:{{ruby_group}} -R /var/www/chef
+
+    - name: install chefDK
+      shell: >
+       cd /tmp; wget https://packages.chef.io/stable/ubuntu/12.04/chefdk_0.14.25-1_amd64.deb;
+       dpkg -i chefdk_0.14.25-1_amd64.deb;
+
+
+
+- hosts: all
+  sudo: false
+  tasks:
+    - shell: >
+       chef gem install chef-provisioning chef-provisioning-docker docker docker-api;
+       chef gem install bundler;
+       chef gem install knife-zero;
+
+
+# gems
+#      gem install rspec;
+
+# docker
+       #groupadd docker;
+       #usermod -aG docker vagrant
+
+
+# deploy app
+- include: deploy.yml
+
+# init app
+- include: app_init.yml
+
+
+### dns
+- hosts: all
+  sudo: true
+  tasks:
+    - include_vars: "../roles/dns/defaults/main.yml"
+    - set_fact:
+        dns_nameservers:
+          - "{{dns_server}}"
+          - '8.8.8.8'
+    - name: change DNS servers
+      include: ../roles/dns/tasks/main.yml
+
+
+    - name: change DNS servers - hard
+      include: ../roles/dns/tasks/set_dns_resolv.yml
+
+
+# nfs
+
+    - name: nfs-kernel-server
+      shell: sudo apt-get install -y nfs-kernel-server
+
+    - name: nfs client components
+      shell: sudo apt-get install -y nfs-common
+
+
+    - name: dir /var/nfs
+      file: path=/var/nfs state=directory mode=0777 owner=vagrant group=nogroup
+
+
+    # config nfs
+    - name: edit /etc/exports
+      lineinfile: >
+        dest=/etc/exports regexp="/var/www.*"
+        line="/var/www/ansible *(r,all_squash,sync)"
+        state=present
+
+
+    - name: exportfs
+      shell: sudo exportfs -a
+
+    - name: fix permissions for /var/www/ansible
+
+      shell: sudo chown nobody:nogroup -R /var/www/ansible
+
+
+    - name: start nfs
+      shell: sudo service nfs-kernel-server start

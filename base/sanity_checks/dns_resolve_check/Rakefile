@@ -1,0 +1,5 @@
+require_relative 'gex_resolve'
+desc 'Update hosts'
+task :update_hosts do
+  GexResolve.update_hosts
+end

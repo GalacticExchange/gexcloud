@@ -1,0 +1,15 @@
+---
+  #- debug: msg="from role, env = {{app_env}}, name={{app_name}}"
+
+  - name: create folder in /var/www/apps
+    file: path=/var/www/apps/{{app_name}} state=directory mode=0775 owner={{ruby_user}} group={{ruby_group}}
+
+  - name: create folder in /var/www/logs
+    file: path=/var/www/logs/{{app_name}} state=directory mode=0775 owner={{ruby_user}} group={{ruby_group}}
+
+  - name: nginx server
+    template: src=app.conf.j2 dest=/etc/nginx/sites-available/{{app_name}}.conf owner=root group={{ruby_group}} mode=0775
+
+  - name: nginx server enable
+    command: ln -s /etc/nginx/sites-available/{{app_name}}.conf  /etc/nginx/sites-enabled/{{app_name}}.conf
+    ignore_errors: true

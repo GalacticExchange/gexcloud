@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+cat >> /etc/profile <<EOT
+
+JWT_SECRET={{jwt_secret}}
+
+export JWT_SECRET
+
+EOT
+
+

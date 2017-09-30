@@ -1,0 +1,7 @@
+---
+## input:
+# - dns_hosts
+#
+
+- name: edit /etc/hosts
+  include: ../roles/dns/tasks/add_hosts.yml

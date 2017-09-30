@@ -1,0 +1,10 @@
+Common.dexecs  \
+"chown vagrant:vagrant -R /opt/openresty",
+"chmod g+x -R /opt/openresty",
+"chown vagrant:vagrant -R /home/vagrant/nginx-jwt",
+"chmod g+x -R /home/vagrant/nginx-jwt",
+"chown vagrant:vagrant -R /home/vagrant/temp",
+"chmod g+x -R /home/vagrant/temp",
+"ln -s /opt/openresty/nginx/sites-available/default.conf /opt/openresty/nginx/sites-enabled/default.conf",
+"echo $public_ip $domainname >> /etc/hosts"
+"bash /tmp/etc_profile_jwt_token.sh"

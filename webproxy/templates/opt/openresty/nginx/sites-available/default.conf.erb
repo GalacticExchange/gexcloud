@@ -1,0 +1,173 @@
+<%# vagrant:vagrant:775 %> server {
+    listen 80;
+    <% if @domain_aliases %>
+        server_name <%= @domainname %> <%= @domain_aliases %>;
+    <% else %>
+        server_name <%= @domainname %> ;
+    <% end %>
+
+
+    ### new 2016-nov
+
+    location /setcookie {
+        #set_by_lua $secret 'return os.getenv("JWT_SECRET")';
+
+        # MIME type determined by default_type:
+        #default_type 'text/html';
+
+        content_by_lua '
+            ngx.header["Content-Type"] = "text/html"
+
+            local token = nil
+
+            -- url from params
+
+local hex_to_char = function(x)
+  return string.char(tonumber(x, 16))
+end
+
+local unescape = function(url)
+  return url:gsub("%%(%x%x)", hex_to_char)
+end
+
+
+            local v_param_url = ngx.var.arg_u
+
+            if v_param_url == nil then
+               v_param_url = ""
+            else
+               v_param_url = unescape(v_param_url)
+            end
+
+
+        -- get token
+
+        local v_param_token = ngx.var.arg_token
+
+        if not(v_param_token == nil) then
+           token = v_param_token
+        end
+
+        -- get from post
+        ngx.req.read_body()
+        local args, err = ngx.req.get_post_args()
+        if not args then
+             --ngx.say("failed to get post args: ", err)
+             --return
+        else
+            for key, val in pairs(args) do
+                 if type(val) == "table" then
+                     -- ngx.say(key, ": ", table.concat(val, ", "))
+                 else
+                    if key == "token" then
+                        token = val
+                    end
+                 end
+            end
+        end
+
+
+        -- check
+        if token == nil then
+           ngx.say("Bad request")
+           ngx.exit(ngx.HTTP_OK)
+        end
+
+        -- set cookie
+        local expires = 3600 * 24 * 30  -- 30 days
+        ngx.header["Set-Cookie"] = "token=" .. token .. "; path=/; domain=<%= @domainname %>; expires=" .. ngx.cookie_time(ngx.time() + expires) .. "; HttpOnly"
+
+
+local p = [[
+<HTML>
+    <HEAD>
+    <TITLE>Connecting...</TITLE>
+    </HEAD>
+    <BODY>
+
+    <script>
+        var url = "%s";
+
+
+        // similar behavior as clicking on a link
+        if (url !=""){
+           window.location.href = "%s";
+        }
+
+
+        // similar behavior as an HTTP redirect
+        //window.location.replace("http://stackoverflow.com");
+
+    </script>
+
+     <A HREF="%s">Click here if you are not redirected</A>
+    </BODY>
+    </HTML>
+]]
+     p = string.format(p, v_param_url, v_param_url, v_param_url)
+
+
+            ngx.say(p)
+            ngx.exit(ngx.HTTP_OK)
+        ';
+
+    }
+
+### old - without redirect in JS
+
+    location /setcookie_old {
+        #set_by_lua $secret 'return os.getenv("JWT_SECRET")';
+
+        # MIME type determined by default_type:
+        #default_type 'text/plain';
+
+        content_by_lua '
+            ngx.header["Content-Type"] = "text/plain"
+            --ngx.say("OK")
+
+            local token = nil
+
+            local v_param_token = ngx.var.arg_token
+
+            if not(v_param_token == nil) then
+               token = v_param_token
+            end
+
+        -- get from post
+        ngx.req.read_body()
+        local args, err = ngx.req.get_post_args()
+        if not args then
+             --ngx.say("failed to get post args: ", err)
+             --return
+        else
+            for key, val in pairs(args) do
+                 if type(val) == "table" then
+                     -- ngx.say(key, ": ", table.concat(val, ", "))
+                 else
+                    if key == "token" then
+                        token = val
+                    end
+                 end
+            end
+        end
+
+
+            -- check
+            if token == nil then
+               ngx.say("No token in request")
+               ngx.exit(ngx.HTTP_OK)
+            end
+
+            -- set cookie
+            local expires = 3600 * 24 * 30  -- 30 days
+            ngx.header["Set-Cookie"] = "token=" .. token .. "; path=/; domain=<%= @domainname %>; expires=" .. ngx.cookie_time(ngx.time() + expires) .. "; HttpOnly"
+
+
+            ngx.exit(ngx.HTTP_OK)
+        ';
+
+    }
+
+
+}
+

@@ -1,0 +1,3 @@
+fakeroot dpkg-deb --build gex_bare_metal
+
+chmod 755 on scripts in DEBIAN

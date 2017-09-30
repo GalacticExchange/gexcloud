@@ -1,0 +1,98 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, ST=CA, L=SanFrancisco, O=GEX, OU=GEX, CN=GEX CA/name=server/emailAddress=GEX
+        Validity
+            Not Before: Aug 25 19:37:58 2015 GMT
+            Not After : Aug 22 19:37:58 2025 GMT
+        Subject: C=US, ST=CA, L=SanFrancisco, O=GEX, OU=GEX, CN=server/name=server/emailAddress=GEX
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:d2:7d:59:e0:eb:2b:67:ea:44:23:44:1c:1a:82:
+                    13:80:8a:e5:cf:58:b5:4e:4b:57:3c:b6:cc:ef:97:
+                    e0:0a:fe:6c:78:6a:e2:6e:87:25:2d:75:9c:c3:b8:
+                    dd:49:5c:42:6d:24:43:10:b2:bd:2d:e0:52:87:f6:
+                    4e:8f:ec:ff:dc:d5:97:e6:eb:9b:2e:96:db:77:39:
+                    53:2e:93:cf:fc:d4:7c:06:7a:13:ec:95:65:3c:b4:
+                    86:65:1e:c6:5e:0d:3a:01:cc:98:9e:14:53:a1:a5:
+                    ae:58:26:50:07:fc:35:6f:fe:f9:01:6e:b7:f8:0e:
+                    73:a9:29:f2:e4:69:67:2d:11:24:27:e7:59:56:36:
+                    ae:6c:94:3c:3c:23:e5:0d:35:9f:81:74:dd:99:b5:
+                    e6:1a:ce:2f:a6:11:d4:a3:8e:4a:6a:0a:36:a2:5b:
+                    85:6d:f0:0d:38:40:2c:cc:e9:10:c9:0d:cb:76:59:
+                    af:07:e1:06:56:42:d8:c9:20:8f:35:86:27:c0:8a:
+                    7e:f4:35:09:95:cd:63:00:10:db:6a:91:a8:2b:d5:
+                    3c:4e:67:5e:01:51:76:49:a7:4f:71:4e:a6:f8:55:
+                    c4:cc:af:01:eb:02:0e:33:af:ed:f0:b7:c1:2e:5e:
+                    40:6e:55:b4:3a:43:8b:cb:7f:43:ce:3e:12:e4:52:
+                    39:73
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Cert Type: 
+                SSL Server
+            Netscape Comment: 
+                Easy-RSA Generated Server Certificate
+            X509v3 Subject Key Identifier: 
+                9F:4F:35:37:3F:76:E6:1D:04:A3:28:C8:C8:91:2E:30:B4:B4:43:03
+            X509v3 Authority Key Identifier: 
+                keyid:A5:62:BF:A4:3E:45:04:7F:6E:F8:3D:2A:BE:FF:70:B4:97:62:EA:FB
+                DirName:/C=US/ST=CA/L=SanFrancisco/O=GEX/OU=GEX/CN=GEX CA/name=server/emailAddress=GEX
+                serial:AA:63:65:ED:B5:70:54:E4
+
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment
+            X509v3 Subject Alternative Name: 
+                DNS:server
+    Signature Algorithm: sha256WithRSAEncryption
+         26:0b:c9:a6:59:05:41:d0:f0:b8:4e:e7:03:b2:68:59:e3:dd:
+         c9:b9:0d:83:40:3a:45:27:2a:d7:46:1c:a6:d1:b3:f8:ca:88:
+         59:53:fe:fa:4f:ef:c9:13:99:9d:7c:20:73:5c:59:08:26:4b:
+         68:b4:f0:f8:78:80:a8:d4:79:70:8d:9d:cd:66:10:08:d3:a8:
+         99:c1:1c:ce:79:eb:1a:6e:ea:59:b3:0b:f8:46:30:62:5d:e3:
+         13:29:ff:95:83:2f:b3:67:2e:b5:5b:6b:a2:c4:03:71:22:96:
+         7c:10:35:ef:cb:69:60:35:cc:7c:33:16:8d:36:ec:6d:94:95:
+         b7:eb:bd:27:65:f4:8c:43:b9:9b:c3:06:f6:f8:04:7b:50:f8:
+         94:61:1a:cc:b8:90:92:5f:a2:10:82:e3:e4:86:d1:0d:76:41:
+         f9:f3:34:53:09:cc:51:b0:71:f9:d6:ff:77:7c:b0:06:46:3f:
+         91:8b:5a:57:a1:b7:bc:42:e3:79:b4:34:4b:f7:7c:40:f2:61:
+         99:a6:d0:83:a2:15:52:14:57:3f:11:cf:1b:82:f2:60:b2:d7:
+         ce:bd:a9:92:48:df:bd:e5:cf:12:40:70:ea:ec:d7:a4:4c:14:
+         18:e6:d1:de:b7:61:8e:81:d9:a2:9b:a5:86:bc:ab:a7:d0:ab:
+         ea:0e:da:c2
+-----BEGIN CERTIFICATE-----
+MIIE7DCCA9SgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx
+CzAJBgNVBAgTAkNBMRUwEwYDVQQHEwxTYW5GcmFuY2lzY28xDDAKBgNVBAoTA0dF
+WDEMMAoGA1UECxMDR0VYMQ8wDQYDVQQDEwZHRVggQ0ExDzANBgNVBCkTBnNlcnZl
+cjESMBAGCSqGSIb3DQEJARYDR0VYMB4XDTE1MDgyNTE5Mzc1OFoXDTI1MDgyMjE5
+Mzc1OFowgYMxCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJDQTEVMBMGA1UEBxMMU2Fu
+RnJhbmNpc2NvMQwwCgYDVQQKEwNHRVgxDDAKBgNVBAsTA0dFWDEPMA0GA1UEAxMG
+c2VydmVyMQ8wDQYDVQQpEwZzZXJ2ZXIxEjAQBgkqhkiG9w0BCQEWA0dFWDCCASIw
+DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANJ9WeDrK2fqRCNEHBqCE4CK5c9Y
+tU5LVzy2zO+X4Ar+bHhq4m6HJS11nMO43UlcQm0kQxCyvS3gUof2To/s/9zVl+br
+my6W23c5Uy6Tz/zUfAZ6E+yVZTy0hmUexl4NOgHMmJ4UU6GlrlgmUAf8NW/++QFu
+t/gOc6kp8uRpZy0RJCfnWVY2rmyUPDwj5Q01n4F03Zm15hrOL6YR1KOOSmoKNqJb
+hW3wDThALMzpEMkNy3ZZrwfhBlZC2MkgjzWGJ8CKfvQ1CZXNYwAQ22qRqCvVPE5n
+XgFRdkmnT3FOpvhVxMyvAesCDjOv7fC3wS5eQG5VtDpDi8t/Q84+EuRSOXMCAwEA
+AaOCAWcwggFjMAkGA1UdEwQCMAAwEQYJYIZIAYb4QgEBBAQDAgZAMDQGCWCGSAGG
++EIBDQQnFiVFYXN5LVJTQSBHZW5lcmF0ZWQgU2VydmVyIENlcnRpZmljYXRlMB0G
+A1UdDgQWBBSfTzU3P3bmHQSjKMjIkS4wtLRDAzCBuAYDVR0jBIGwMIGtgBSlYr+k
+PkUEf274PSq+/3C0l2Lq+6GBiaSBhjCBgzELMAkGA1UEBhMCVVMxCzAJBgNVBAgT
+AkNBMRUwEwYDVQQHEwxTYW5GcmFuY2lzY28xDDAKBgNVBAoTA0dFWDEMMAoGA1UE
+CxMDR0VYMQ8wDQYDVQQDEwZHRVggQ0ExDzANBgNVBCkTBnNlcnZlcjESMBAGCSqG
+SIb3DQEJARYDR0VYggkAqmNl7bVwVOQwEwYDVR0lBAwwCgYIKwYBBQUHAwEwCwYD
+VR0PBAQDAgWgMBEGA1UdEQQKMAiCBnNlcnZlcjANBgkqhkiG9w0BAQsFAAOCAQEA
+JgvJplkFQdDwuE7nA7JoWePdybkNg0A6RScq10YcptGz+MqIWVP++k/vyROZnXwg
+c1xZCCZLaLTw+HiAqNR5cI2dzWYQCNOomcEcznnrGm7qWbML+EYwYl3jEyn/lYMv
+s2cutVtrosQDcSKWfBA178tpYDXMfDMWjTbsbZSVt+u9J2X0jEO5m8MG9vgEe1D4
+lGEazLiQkl+iEILj5IbRDXZB+fM0UwnMUbBx+db/d3ywBkY/kYtaV6G3vELjebQ0
+S/d8QPJhmabQg6IVUhRXPxHPG4LyYLLXzr2pkkjfveXPEkBw6uzXpEwUGObR3rdh
+joHZopulhryrp9Cr6g7awg==
+-----END CERTIFICATE-----

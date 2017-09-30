@@ -1,0 +1,17 @@
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network.target docker.socket
+Requires=docker.socket
+
+[Service]
+Type=forking
+PIDFile=/tmp/gex_{{_container_name}}.pid
+Restart=always
+TimeoutStartSec=0
+RestartSec=1
+ExecStart=/usr/local/bin/runslavedocker.bash {{_container_name}}
+ExecStop=/usr/bin/docker stop {{_container_name}} 
+ExecStopPost=/usr/bin/pkill -KILL -f {{_container_name}} 
+[Install]
+WantedBy=multi-user.target

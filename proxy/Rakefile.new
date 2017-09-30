@@ -1,0 +1,12 @@
+docker login https: // 51.1 .0 .50 : 5043
+docker pull dockerregistry.gex : 5043/ubuntu-systemd
+
+gex
+PH_GEX_PASSWD1
+
+
+sudo mkdir /usr/ local/share/ca-certificates/docker-dev-cert
+sudo cp devdockerCA.crt /usr/ local/share/ca-certificates/docker-dev-cert
+sudo update-ca-certificates
+
+sudo service docker restart

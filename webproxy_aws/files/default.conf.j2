@@ -1,0 +1,59 @@
+server {
+    listen 80;
+    server_name {{domainname}};
+
+    location /setcookie {
+        #set_by_lua $secret 'return os.getenv("JWT_SECRET")';
+
+        # MIME type determined by default_type:
+        #default_type 'text/plain';
+
+        content_by_lua '
+            ngx.header["Content-Type"] = "text/plain"
+            --ngx.say("OK")
+
+            local token = nil
+
+            local v_param_token = ngx.var.arg_token
+
+            if not(v_param_token == nil) then
+               token = v_param_token
+            end
+
+        -- get from post
+        ngx.req.read_body()
+        local args, err = ngx.req.get_post_args()
+        if not args then
+             --ngx.say("failed to get post args: ", err)
+             --return
+        else
+            for key, val in pairs(args) do
+                 if type(val) == "table" then
+                     -- ngx.say(key, ": ", table.concat(val, ", "))
+                 else
+                    if key == "token" then
+                        token = val
+                    end
+                 end
+            end
+        end
+
+
+            -- check
+            if token == nil then
+               ngx.say("No token in request")
+               ngx.exit(ngx.HTTP_OK)
+            end
+
+            -- set cookie
+            local expires = 3600 * 24 * 30  -- 30 days
+            ngx.header["Set-Cookie"] = "token=" .. token .. "; path=/; domain={{domainname}}; expires=" .. ngx.cookie_time(ngx.time() + expires) .. "; HttpOnly"
+
+
+            ngx.exit(ngx.HTTP_OK)
+        ';
+
+    }
+
+}
+

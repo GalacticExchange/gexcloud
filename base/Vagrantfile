@@ -1,0 +1,154 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+def cpu_count
+  return Java::Java.lang.Runtime.getRuntime.availableProcessors if defined? Java::Java
+  return File.read('/proc/cpuinfo').scan(/^processor\s*:/).size if File.exist? '/proc/cpuinfo'
+  require 'win32ole'
+  WIN32OLE.connect("winmgmts://").ExecQuery("select * from Win32_ComputerSystem").NumberOfProcessors
+rescue LoadError
+  Integer `sysctl -n hw.ncpu 2>/dev/null` rescue 1
+end
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure(2) do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://atlas.hashicorp.com/search.
+
+  config.vm.provider "virtualbox" do |vb|
+    #   # Display the VirtualBox GUI when booting the machine
+    #   vb.gui = true
+    #
+    #   # Customize the amount of memory on the VM:
+    vb.memory = "12512"
+    vb.cpus = cpu_count
+    vb.gui = true
+  end
+
+
+  config.vm.define 'ubuntu16basic', autostart: false do |ubuntu16gex|
+    #ubuntu16gex.vm.box = 'ubuntu/xenial64'
+    ubuntu16gex.vm.box = 'bento/ubuntu-16.04'
+
+=begin
+    # This requires vagrant-disksize
+    # plugin installed: https://github.com/sprotheroe/vagrant-disksize
+    config.disksize.size = '100GB'
+
+    config.vm.provision "shell", inline: <<-SHELL
+      useradd -p $(openssl passwd -1 vagrant) -m -s /bin/bash vagrant
+      adduser vagrant sudo
+      echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+      apt-get install -y python
+      cp -r /home/ubuntu/.ssh /home/vagrant/
+      chown -R vagrant:vagrant /home/vagrant/.ssh
+    SHELL
+=end
+
+  end
+
+  config.vm.define 'ubuntu16docker', autostart: false do |ubuntu16docker|
+    #ubuntu15docker.vm.box = "gex/client"
+    #ubuntu15docker.vm.box = "sgallen/wily64"
+    #ubuntu16docker.vm.box = 'ubuntu16basic'
+
+    #ubuntu16docker.vm.box = 'bento/ubuntu-16.04' #this is stable
+    ubuntu16docker.vm.box = 'ubuntu16base_box'
+
+    config.ssh.username = 'vagrant'
+    config.ssh.password = 'vagrant'
+
+    ubuntu16docker.vm.provision "shell", inline: <<-SHELL
+      apt-get install -y python
+    SHELL
+
+    ubuntu16docker.vm.provision 'ansible' do |ansible|
+      ansible.verbose = 'vvv'
+      ansible.playbook = 'ubuntu15docker.yml'
+    end
+
+    #ubuntu16docker.ssh.insert_key=false
+  end
+
+  config.vm.define 'gexwily64', autostart: false do |ubuntu15docker|
+    ubuntu15docker.vm.box = 'ubuntu/wily64'
+    ubuntu15docker.vm.provision 'ansible' do |ansible|
+      ansible.verbose = 'v'
+      ansible.playbook = 'ubuntu15docker.yml'
+    end
+
+    ubuntu15docker.ssh.insert_key=false
+
+  end
+
+  config.vm.define 'buildvivid', autostart: false do |build14|
+    build14.vm.box = 'ubuntu/vivid64'
+  end
+
+  config.vm.define 'build14', autostart: false do |build14|
+    build14.vm.box = 'ubuntu/trusty64'
+  end
+
+  config.vm.define 'build', autostart: false do |build|
+    #build.vm.box = "gex/ubuntu15docker"
+    build.vm.box = 'ubuntu16docker'
+    build.ssh.insert_key=false
+
+    build.vm.provision 'ansible' do |ansible|
+      ansible.verbose = 'v'
+      ansible.playbook = 'playbook.yml'
+    end
+
+
+  end
+
+  #config.vm.synced_folder "/disk2", "/disk2"
+
+  config.vm.define 'image', autostart: false do |image|
+    #image.vm.box = "gex/ubuntu15docker"
+    image.vm.box = 'ubuntu16docker'
+
+    #TODO remove this
+    #config.vm.network "public_network", :bridge => 'enp3s0'
+
+    config.ssh.username = 'vagrant'
+    #config.ssh.password = 'vagrant'
+
+    image.vm.provision "shell", inline: <<-SHELL
+      /bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=6048
+      /sbin/mkswap /var/swap.1
+      chmod 600 /var/swap.1
+      /sbin/swapon /var/swap.1
+      echo '/var/swap.1 swap swap defaults 0 0' >> /etc/fstab
+    SHELL
+
+    image.ssh.insert_key=false
+    HDP_TYPE = ENV['HDP_TYPE']
+
+    image.vm.provision 'ansible' do |ansible|
+      ansible.verbose = 'v'
+      ansible.playbook = 'playbookimage.yml'
+      ansible.extra_vars = {
+          hdp_type: "#{HDP_TYPE}"
+      }
+    end
+
+    image.vm.provision 'ansible' do |ansible|
+      ansible.verbose = 'v'
+      ansible.playbook = 'reduce_box_size.yml'
+      ansible.extra_vars = {
+          hdp_type: "#{HDP_TYPE}"
+      }
+    end
+
+  end
+
+end

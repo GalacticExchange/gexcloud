@@ -1,0 +1,38 @@
+### prod
+#PROD_PUBLIC_IP = "104.247.220.92"
+#PROD_PUBLIC_MASK = "255.255.255.248"
+
+require_relative "../common/vagrant/utils.rb"
+
+
+
+def provision_dns(config, settings, global_settings, name)
+
+
+  configure_standard_box_image(config, global_settings)
+
+  config.vm.define name, primary: false, autostart: false do |m|
+
+    if name == :prod
+      m.vm.network "forwarded_port", guest: 5400, host: 5400
+      m.vm.network "forwarded_port", guest: 5400, host: 5400, protocol: 'udp'
+    end
+
+
+    configure_standard_net_and_ram m, settings, global_settings
+
+    extra_vars = {
+        machine: name,
+        _private_ip: settings[:PRIVATE_IP]
+    }
+
+    # enable_gui(m)
+    provision_ansible m, settings, "provision", "playbook.yml", extra_vars
+
+    provision_ansible m, settings, "fixes", "fixes.yml", extra_vars
+
+  end
+end
+
+
+configure_all_boxes "provision_dns", DNS_SETTINGS
